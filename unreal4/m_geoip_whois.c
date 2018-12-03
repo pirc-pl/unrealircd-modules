@@ -50,7 +50,7 @@ static char *get_country_text(char *iip);
 
 ModuleHeader MOD_HEADER(m_geoip_whois) = {
 	"m_geoip_whois",
-	"$Id: v1.03 2018/11/04 k4be$",
+	"$Id: v1.04 2018/12/03 k4be$",
 	"add country info to /whois", 
 	"3.2-b8-1",
 	NULL 
@@ -349,6 +349,7 @@ static int read_countries(void){
 	while(fscanf(u, "%d,%[^\n]", &id, buf) == 2){ //getting country ID integer and all other data in string
 		char *ptr = buf;
 		char *optr = code;
+		int quote_open = 0;
 		i=0;
 		while(*ptr){
 			if(i == 3){
@@ -359,14 +360,19 @@ static int read_countries(void){
 			if(*ptr == ','){
 				ptr++;
 				i++;
-				if(i == 4) break;
+				if(i == 4) break; // look for country name entry
 			}
 		}
 		*optr = '\0';
 		optr = name;
 		while(*ptr){
-			*optr++ = *ptr++; // scan for country name
+			switch(*ptr){
+				case '"': quote_open = !quote_open; ptr++; continue;
+				case ',': if(!quote_open) goto end_loop; // we reached the end of current CSV field
+				default: *optr++ = *ptr++; break; // scan for country name
+			}
 		}
+		end_loop:
 		*optr = '\0';
 		if(country_list){
 			curr->next = MyMallocEx(sizeof(struct country));

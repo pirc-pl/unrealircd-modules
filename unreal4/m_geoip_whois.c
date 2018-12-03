@@ -50,7 +50,7 @@ static char *get_country_text(char *iip);
 
 ModuleHeader MOD_HEADER(m_geoip_whois) = {
 	"m_geoip_whois",
-	"$Id: v1.04 2018/12/03 k4be$",
+	"$Id: v1.05 2018/12/03 k4be$",
 	"add country info to /whois", 
 	"3.2-b8-1",
 	NULL 
@@ -353,6 +353,9 @@ static int read_countries(void){
 		i=0;
 		while(*ptr){
 			if(i == 3){
+				if(*ptr == ','){	// country code is empty
+					goto next_line;	// -- that means only the continent is specified - we ignore it completely
+				}
 				*optr = *ptr; // scan for country code (DE, PL, US etc)
 				optr++;
 			}
@@ -368,11 +371,11 @@ static int read_countries(void){
 		while(*ptr){
 			switch(*ptr){
 				case '"': quote_open = !quote_open; ptr++; continue;
-				case ',': if(!quote_open) goto end_loop; // we reached the end of current CSV field
+				case ',': if(!quote_open) goto end_country_name; // we reached the end of current CSV field
 				default: *optr++ = *ptr++; break; // scan for country name
 			}
 		}
-		end_loop:
+		end_country_name:
 		*optr = '\0';
 		if(country_list){
 			curr->next = MyMallocEx(sizeof(struct country));
@@ -385,7 +388,7 @@ static int read_countries(void){
 		strcpy(curr->code, code);
 		strcpy(curr->name, name);
 		curr->id = id;
-		
+		next_line: continue;		
 	}
 	fclose(u);
 	return 0;

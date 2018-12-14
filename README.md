@@ -18,3 +18,8 @@ This one is created as an attempt of making behaviour of the +R chanmode more se
 of creating this module.
 
 `~I:~q:~c:#channel` - allows users coming from #channel to talk only when they are registered.
+
+## m_showwebirc
+*Not stable, needs testing!*
+
+This one appends swhois info to users that are connected with WEBIRC authorization.

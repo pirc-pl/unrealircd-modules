@@ -72,7 +72,7 @@ int geoip_whois_configrun(ConfigFile *cf, ConfigEntry *ce, int type);
 
 ModuleHeader MOD_HEADER(m_geoip_whois) = {
 	"m_geoip_whois",
-	"$Id: v1.06 2018/12/16 k4be$",
+	"$Id: v1.07 2018/12/16 k4be$",
 	"add country info to /whois", 
 	"3.2-b8-1",
 	NULL 
@@ -166,12 +166,15 @@ int geoip_whois_configtest(ConfigFile *cf, ConfigEntry *ce, int type, int *errs)
 		}
 
 		if(!strcmp(cep->ce_varname, "display-name")) { // no value expected
+			display_anything = 1;
 			continue;
 		}
 		if(!strcmp(cep->ce_varname, "display-code")) {
+			display_anything = 1;
 			continue;
 		}
 		if(!strcmp(cep->ce_varname, "display-continent")) {
+			display_anything = 1;
 			continue;
 		}
 		
@@ -195,6 +198,11 @@ int geoip_whois_configtest(ConfigFile *cf, ConfigEntry *ce, int type, int *errs)
 
 	if(!have_countries_file){
 		config_error("m_geoip_whois: no (correct) countries file specified.");
+		errors++;
+	}
+
+	if(!display_anything){
+		config_error("m_geoip_whois: configured not to display anything! Specify at least one of: display-name, display-code, display-continent.");
 		errors++;
 	}
 	
@@ -744,8 +752,8 @@ MOD_LOAD(m_geoip_whois)
 			free_all();
 			return MOD_FAILED;
 		}
-		info_string = strdup("connected from ");
 	}
+	if(info_string == NULL) info_string = strdup("connected from ");
 	
 	list_for_each_entry(acptr, &client_list, client_node){
 		if (!IsPerson(acptr)) continue;

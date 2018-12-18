@@ -22,6 +22,11 @@ geoip-whois {
 
 #define MYCONF "geoip-whois"
 
+// suggested by Gottem to allow Windows compilation
+#ifndef R_OK
+#define R_OK 4
+#endif
+
 struct ip_range {
 	uint32_t addr;
 	uint32_t mask;

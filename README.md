@@ -87,6 +87,8 @@ Optionally, MySQL support can be completely removed (when you don't want to use 
 
 +p / +s channels are always ignored.
 
+Message counters are not very precise, as the module counts only messages going through the server it is loaded on. That means that some channels at some time can not be counted.
+
 The module looks for a config block:
 ```C
 wwwstats {

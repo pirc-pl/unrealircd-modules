@@ -35,7 +35,7 @@ of creating this module.
 `~I:~q:~c:#channel` - allows users coming from #channel to talk only when they are registered.
 
 ## m_showwebirc
-
+### (not used on PIRC)
 This one appends swhois info to users that are connected with WEBIRC authorization.
 
 ## m_wwwstats

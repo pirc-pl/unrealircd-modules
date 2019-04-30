@@ -21,6 +21,10 @@
 #include <sys/socket.h>
 #include <sys/un.h>
 
+#ifndef TOPICLEN
+#define TOPICLEN MAXTOPICLEN
+#endif
+
 struct chanStats_s {
 	aChannel *chan;
 	char chname[2*CHANNELLEN+1];

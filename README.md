@@ -47,7 +47,9 @@ Display option left out means that this info won't be displayed. (Keep at least 
 This one allow banning users from certain countries on a channel. Exceptions and invite exceptions are also possible.
 
 `/mode #channel +b ~C:FR` - will prevent all users from France from joining.
-`/mode #channel +iI ~C:RU` - only users from Romania will be able to join.
+
+`/mode #channel +iI ~C:RO` - only users from Romania will be able to join.
+
 `/mode #channel +be *4*!*@* ~C:PL` - only users from Poland are allowed to have a number "4" in their nick.
 
 Load this module on every server, together with geoip-base (on two servers for redundancy) or geoip-transfer (on remaining ones).

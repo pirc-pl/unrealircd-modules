@@ -229,9 +229,4 @@ wwwstats {
 
 ## Licensing information
 
-You can use, modify and share the modules if you want to, as long as:
-1. you provide the source code,
-1. you keep the information about original authors,
-1. you keep the original documentation URL somewhere inside the code.
-
-We hope that the software will be useful, but can't guarantee that. You're the one responsible for any effects when you decide to use it.
+You can use, modify and share the modules according to the [GPLv3](https://www.gnu.org/licenses/gpl-3.0.html) license, unless it's stated differently inside the source code file.

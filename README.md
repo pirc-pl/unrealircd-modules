@@ -56,7 +56,7 @@ Load this module on every server, together with geoip-base (on two servers for r
 
 ### geoip-transfer
 
-This one transfers data that come from the geoip-base module loaded on other server, so you don't have to use the resource-intensive geoip-base everywhere. It is currently not needed for anything (as geoip-whois is needed only on a single server) so don't install it yet.
+This one transfers data that come from the geoip-base module loaded on other server, so you don't have to use the resource-intensive geoip-base everywhere. It may be needed by the "geoip-chanban".
 
 ### unauthban
 This one is created as an attempt of making behaviour of the +R chanmode more selective. It allows things like:

@@ -40,6 +40,8 @@ geoip-whois {
 };
 ```
 
+Display option left out means that this info won't be displayed. (Keep at least one enabled.) No info-string text will cause the module to default to "connected from ".
+
 ### geoip-chanban
 
 This one allow banning users from certain countries on a channel. Exceptions and invite exceptions are also possible.

@@ -28,7 +28,7 @@ These can be downloaded from [here](https://dev.maxmind.com/geoip/geoip2/geolite
 
 This one appends swhois info to all users, unless they are not listed in the geoip data.
 
-This module needs to be loaded on only single server on the network, and requires the "geoip-base" module loaded on same server.
+This module needs to be loaded on only single server on the network (it'll serve the whole network), and requires the "geoip-base" module loaded on same server.
 
 The module looks for a config block:
 ```C
@@ -40,9 +40,15 @@ geoip-whois {
 };
 ```
 
-Display option left out means that this info won't be displayed. (Keep at least one enabled.) No info-string text will cause the module to default to "connected from ".
+### geoip-chanban
 
-If this block is not given, it defaults to the options in example above.
+This one allow banning users from certain countries on a channel. Exceptions and invite exceptions are also possible.
+
+`/mode #channel +b ~C:FR` - will prevent all users from France from joining.
+`/mode #channel +iI ~C:RU` - only users from Romania will be able to join.
+`/mode #channel +be *4*!*@* ~C:PL` - only users from Poland are allowed to have a number "4" in their nick.
+
+Load this module on every server, together with geoip-base (on two servers for redundancy) or geoip-transfer (on remaining ones).
 
 ### geoip-transfer
 

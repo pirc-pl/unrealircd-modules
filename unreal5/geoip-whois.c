@@ -57,9 +57,6 @@ static char *get_country_text(Client *);
 int geoip_whois_configtest(ConfigFile *cf, ConfigEntry *ce, int type, int *errs);
 int geoip_whois_configposttest(int *errs);
 int geoip_whois_configrun(ConfigFile *cf, ConfigEntry *ce, int type);
-void geoip_moddata_free(ModData *m);
-char *geoip_moddata_serialize(ModData *m);
-void geoip_moddata_unserialize(char *str, ModData *m);
 EVENT(set_existing_users_evt);
 EVENT(set_new_user_evt);
 
@@ -208,30 +205,6 @@ static char *get_country_text(Client *cptr){
 	if(display_code) sprintf(buf + strlen(buf), "%s(%s)", display_name?" ":"", curr_country->code);
 	if(display_continent) sprintf(buf + strlen(buf), "%s%s", (display_name || display_code)?", ":"", curr_country->continent);
 	return buf;
-}
-
-void geoip_moddata_free(ModData *m){
-	if(m->ptr) safe_free(m->ptr);
-	m->ptr = NULL;
-}
-
-char *geoip_moddata_serialize(ModData *m){
-	static char buf[140];
-	if(!m->ptr) return NULL;
-	struct country *country = (struct country *)m->ptr;
-	ircsnprintf(buf, 140, "%s!%s!%s", country->code, country->name, country->continent);
-	return buf;
-}
-
-void geoip_moddata_unserialize(char *str, ModData *m){
-	if(m->ptr) safe_free(m->ptr);
-	struct country *country = safe_alloc(sizeof(struct country));
-	if(sscanf(str, "%[^!]!%[^!]!%[^!]", country->code, country->name, country->continent) != 3){ // invalid argument
-		safe_free(country);
-		m->ptr = NULL;
-	} else {
-		m->ptr = country;
-	}
 }
 
 MOD_TEST(){

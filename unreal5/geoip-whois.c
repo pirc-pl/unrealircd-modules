@@ -215,7 +215,7 @@ static char *get_country_text(Client *cptr){
 	curr_country = moddata_client(cptr, md).ptr;
 	if(!curr_country){
 		if(!suppress_null_warning){
-			sendto_realops("geoip-whois: curr_country is NULL for %s (%s), perhaps no geoip-base module available on the network, or incomplete/outdated database?", cptr->name, cptr->ip);
+			sendto_realops("geoip-whois: curr_country is NULL for %s (%s), perhaps no geoip-base module available on this server, or incomplete/outdated database?", cptr->name, cptr->ip);
 			sendto_realops("geoip-whois: Please note that the warning won't reappear for the next %d hours.", WARNING_SUPPRESS_TIME);
 			suppress_null_warning = 1;
 			EventAdd(geoip_modinfo->handle, "allow_next_warning", allow_next_warning_evt, NULL, (long)WARNING_SUPPRESS_TIME * 60 * 60 * 1000, 1);
@@ -265,16 +265,16 @@ MOD_UNLOAD(){
 		if (!IsUser(acptr)) continue;
 		swhois_delete(acptr, "geoip", "*", &me, NULL); // delete info when unloading 
 	}
+	safe_free(info_string);
 	return MOD_SUCCESS;
 }
 
 static int geoip_whois_userconnect(Client *cptr) {
-	if(!cptr) HOOK_CONTINUE;
+	if(!cptr) return HOOK_CONTINUE;
 	char *cdata = get_country_text(cptr);
-	if(!cdata) HOOK_CONTINUE;
+	if(!cdata) return HOOK_CONTINUE;
 	char buf[BUFLEN+1];
 	sprintf(buf, "%s%s", info_string, cdata);
-	swhois_delete(cptr, "geoip", "*", &me, NULL); //somehow has it already set
 	swhois_add(cptr, "geoip", 0, buf, &me, NULL);
 	return HOOK_CONTINUE;
 }

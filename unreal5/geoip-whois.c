@@ -14,6 +14,7 @@ module
                 "The module is installed. Now you need to add a loadmodule line:";
                 "loadmodule \"third/geoip-whois\";";
   				"And /REHASH the IRCd.";
+  				"It'll take care of users on all servers in your network.";
 				"Remember that you need \"geoip-base\" module installed on this server";
 				"for geoip-whois to work.";
 				"Detailed documentation is available on https://github.com/pirc-pl/unrealircd-modules/blob/master/README.md";
@@ -65,7 +66,7 @@ CMD_OVERRIDE_FUNC(geoip_whois_overridemd);
 ModuleHeader MOD_HEADER = {
 	"third/geoip-whois",   /* Name of module */
 	"5.0.1", /* Version */
-	"add country info to /whois", /* Short description of module */
+	"Add country info to /whois", /* Short description of module */
 	"k4be@PIRC",
 	"unrealircd-5"
 };
@@ -270,9 +271,9 @@ MOD_UNLOAD(){
 }
 
 static int geoip_whois_userconnect(Client *cptr) {
-	if(!cptr) return HOOK_CONTINUE;
+	if(!cptr) return HOOK_CONTINUE; // is it possible?
 	char *cdata = get_country_text(cptr);
-	if(!cdata) return HOOK_CONTINUE;
+	if(!cdata) return HOOK_CONTINUE; // no country data for this user
 	char buf[BUFLEN+1];
 	sprintf(buf, "%s%s", info_string, cdata);
 	swhois_add(cptr, "geoip", 0, buf, &me, NULL);

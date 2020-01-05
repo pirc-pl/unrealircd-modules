@@ -14,6 +14,7 @@ module
                 "The module is installed. Now you need to add a loadmodule line:";
                 "loadmodule \"third/geoip-chanban\";";
   				"And /REHASH the IRCd.";
+  				"The module does not need any other configuration.";
 				"Remember that you need \"geoip-base\" or \"geoip-transfer\" module installed on this server";
 				"for geoip-chanban to work. See docs for more info.";
 				"Detailed documentation is available on https://github.com/pirc-pl/unrealircd-modules/blob/master/README.md";
@@ -49,6 +50,8 @@ MOD_INIT()
 {
 	ExtbanInfo req;
 	
+	MARK_AS_GLOBAL_MODULE(modinfo);
+	
 	req.flag = 'C';
 	req.is_ok = NULL;
 	req.conv_param = extban_geoip_conv_param;
@@ -56,7 +59,7 @@ MOD_INIT()
 	req.options = EXTBOPT_INVEX;
 	if (!ExtbanAdd(modinfo->handle, req))
 	{
-		config_error("could not register extended ban type");
+		config_error("%s: could not register extended ban type: %s", MOD_HEADER.name, ModuleGetErrorStr(modinfo->handle));
 		return MOD_FAILED;
 	}
 	
@@ -114,8 +117,9 @@ int extban_geoip_is_banned(Client *client, Channel *channel, char *banin, int ty
 //		sendto_realops("geoip-chanban: curr_country is NULL for %s, perhaps no geoip-base module available on the network, or incomplete/outdated database?", client->name);
 		return 0;
 	}
-	if (!strcasecmp(ban, curr_country->code))
+	if(!strcasecmp(ban, curr_country->code))
 		return 1;
 
 	return 0;
 }
+

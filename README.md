@@ -107,7 +107,7 @@ This one allows the Unreal to cooperate with a web statistics system. Two interf
 ```
 2. MySQL database.
 
-Due to incompatibility with the Unreal's module manager, MySQL support is completely disabled by default. Enable it this by changing the line `#undef USE_MYSQL` to `#define USE_MYSQL` in the module source.
+Due to incompatibility with the Unreal's module manager, MySQL support is completely disabled by default. Enable it this by changing the line `#undef USE_MYSQL` to `#define USE_MYSQL` in the module source. Please note that, by default, this change will be overriden by the Module Manager when you run "make" (detecting that your version differs from the published one and re-downloading). You can avoid it by temporary commenting out the official module repository in conf/modules.sources.list.
 
 The module periodically inserts new data to the database, unless the data had not changed since the last insert. This can be used to generate graphs, view previous channel topics etc. You should specify database host (localhost is recommended), user, password and database name. Table structure will be created automatically. The structure is:
 ```sql
@@ -134,6 +134,13 @@ wwwstats {
 	mysql-pass "password";
 };
 ```
+### findchmodes
+
+This one allows IRCoperators to check which channels use certain channel mode. You can use it to check, for example, who has the Channel History enabled.
+
+Usage example:
+
+`/findchmodes +H`
 
 ## Unreal 4.x.x modules
 

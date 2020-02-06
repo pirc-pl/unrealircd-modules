@@ -142,6 +142,32 @@ Usage example:
 
 `/findchmodes +H`
 
+### metadata
+
+This one implements the METADATA command, allowing users to set their avatars, message colouring, status texts etc. It is currently based on the "Work In Progress" (that means the spec can change and then the module and clients will need updating) specification available here: [metadata specification](https://github.com/ircv3/ircv3-specifications/blob/a41c7ab561be6852480d62b99272ae500645acc1/core/metadata-3.2.md).
+
+For compatibility, the module uses two CAPs: `draft/metadata` and `draft/metadata-notify-2`, and also an ISUPPORT tag of `METADATA`.
+
+The module looks for a config block:
+```C
+metadata {
+	max-user-metadata 10;	// maximum metadata count for a single user
+	max-channel-metadata 10;	// maximum metadata count for a single channel
+	max-subscriptions 10;	// maximum number of metadata keys an user can subscribe to
+	enable-debug 0;	// set to 1 for ircops to receive all METADATA commands (floody)
+};
+```
+If the config is not specified, the above defaults are used.
+
+Short usage explanation (for "avatar" metadata key name):
+
+- Set the avatar URL for your nick: `/metadata * set avatar :https://example.com/example.png`
+- Remove your avatar: `/metadata * set avatar`
+- Subscribe to avatars of users (so server will send them for you): `/metadata * sub avatar`
+- The notification sent by the server: `:irc.example.com METADATA someone avatar * :https://example.com/example.png`
+
+Please keep these * signs intact.
+
 ## Unreal 4.x.x modules
 
 Remember that modules listed below are now unsupported.

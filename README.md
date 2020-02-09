@@ -168,6 +168,21 @@ Short usage explanation (for "avatar" metadata key name):
 
 Please keep these * signs intact.
 
+### metadata-db
+
+This one stores metadata for registered users (based on their account names) and restores it for them at logon. User data will expire after specified time (in days). You probably want to set this to a value similar to your services account expiration. Metadata is also stored for +P channels.
+
+This module needs to be loaded on only single server on the network. (You may keep it active on a second one for redundancy, it won't break anything.)
+
+The module looks for a config block:
+```C
+metadata-db {	
+	database "metadata.db";
+	expire-after 365; // days
+};
+```
+If the config is not specified, the above defaults are used.
+
 ## Unreal 4.x.x modules
 
 Remember that modules listed below are now unsupported.

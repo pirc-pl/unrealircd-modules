@@ -183,6 +183,14 @@ metadata-db {
 ```
 If the config is not specified, the above defaults are used.
 
+### setname
+
+This one implements the IRCv3 [SETNAME capability](https://ircv3.net/specs/extensions/setname) (draft/setname). Please note that's this spec is "Work In Progress" (that means the spec can change and then the module and clients will need updating).
+
+### monitor
+
+This one implements the IRCv3 [MONITOR command](https://ircv3.net/specs/core/monitor-3.2). It's independent from the built-in WATCH.
+
 ## Unreal 4.x.x modules
 
 Remember that modules listed below are now unsupported.

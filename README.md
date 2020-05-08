@@ -71,7 +71,55 @@ This one appends swhois info to users that are connected with WEBIRC authorizati
 
 ### wwwstats
 
-This one allows the Unreal to cooperate with a web statistics system. Two interfaces are used:
+This one allows Unreal to cooperate with a web statistics system. This is the simpler version; see below for an extended module with MySQL support, unfortunately not installable with Unreal's module manager. Do NOT install them both.
+
+A single interface is used: UNIX socket. The socket is created on a path specified in config block. When you connect to the socket, the module "spits out" all the current data in JSON format and closes. You can test it with the shell command `socat - UNIX-CONNECT:/tmp/wwwsocket.sock`. It can be used to generate channel lists, server lists, view user counts etc in realtime. Example data:
+```json
+{
+	"clients": 19,
+	"channels": 4,
+	"operators": 18,
+	"servers": 2,
+	"messages": 1459,
+	"serv": [{
+		"name": "test1.example.com",
+		"users": 2
+	}],
+	"chan": [{
+		"name": "#help",
+		"users": 1,
+		"messages": 0
+	}, {
+		"name": "#services",
+		"users": 8,
+		"messages": 971
+	}, {
+		"name": "#opers",
+		"users": 1,
+		"messages": 0,
+		"topic": "This channel has some topic"
+	}, {
+		"name": "#aszxcvbnm",
+		"users": 2,
+		"messages": 485
+	}]
+}
+```
++p / +s channels are always ignored.
+
+Message counters are not very precise, as the module counts only messages going through the server it is loaded on. That means that some channels at some time can not be counted.
+
+The module looks for a config block:
+```C
+wwwstats {
+	socket-path "/tmp/wwwstats.sock";	// do not specify if you don't want the socket
+};
+```
+
+### wwwstats-mysql
+**Note: this module is yet unreleased. Please wait or ask for it.**
+
+This one replaces the "wwwstats" module (do NOT install them both), allowing Unreal to cooperate with a web statistics system. Two interfaces are used:
 
 1. UNIX socket. The socket is created on a path specified in config block. When you connect to the socket, the module "spits out" all the current data in JSON format and closes. You can test it with the shell command `socat - UNIX-CONNECT:/tmp/wwwsocket.sock`. It can be used to generate channel lists, server lists, view user counts etc in realtime. Example data:
 ```json
@@ -107,7 +155,7 @@ This one allows the Unreal to cooperate with a web statistics system. Two interf
 ```
 2. MySQL database.
 
-Due to incompatibility with the Unreal's module manager, MySQL support is completely disabled by default. Enable it this by changing the line `#undef USE_MYSQL` to `#define USE_MYSQL` in the module source. Please note that, by default, this change will be overriden by the Module Manager when you run "make" (detecting that your version differs from the published one and re-downloading). You can avoid it by temporary commenting out the official module repository in conf/modules.sources.list.
+Due to incompatibility with the Unreal's module manager, this module must be installed manually.
 
 The module periodically inserts new data to the database, unless the data had not changed since the last insert. This can be used to generate graphs, view previous channel topics etc. You should specify database host (localhost is recommended), user, password and database name. Table structure will be created automatically. The structure is:
 ```sql
@@ -134,6 +182,7 @@ wwwstats {
 	mysql-pass "password";
 };
 ```
+
 ### findchmodes
 
 This one allows IRCoperators to check which channels use certain channel mode. You can use it to check, for example, who has the Channel History enabled.

@@ -112,7 +112,7 @@ Message counters are not very precise, as the module counts only messages going 
 The module looks for a config block:
 ```C
 wwwstats {
-	socket-path "/tmp/wwwstats.sock";	// do not specify if you don't want the socket
+	socket-path "/tmp/wwwstats.sock";	// this option is REQUIRED
 };
 ```
 

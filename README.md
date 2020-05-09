@@ -242,6 +242,10 @@ This one implements the IRCv3 [SETNAME capability](https://ircv3.net/specs/exten
 
 This one implements the IRCv3 [MONITOR command](https://ircv3.net/specs/core/monitor-3.2). It's independent from the built-in WATCH.
 
+### bot-tag
+
+This one adds an `inspircd.org/bot` message tag to each message sent by a bot (marked with +B flag). This is compatible with more than one existing server software, and can be used bots to avoid replying to other bots. In my opinion, a metadata key is the superior solution, but so far message tags are much more universally supported.
+
 ## Unreal 4.x.x modules
 
 Remember that modules listed below are now unsupported.

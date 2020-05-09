@@ -54,6 +54,12 @@ This one allow banning users from certain countries on a channel. Exceptions and
 
 Load this module on every server, together with geoip-base (on two servers for redundancy) or geoip-transfer (on remaining ones).
 
+### geoip-connect-notice
+
+This one sends geoip information to a far connect (+F) snomask.
+
+Do not load this module on more than one server on the network. Correctly configured `geoip-base` or `geoip-transfer` is required.
+
 ### geoip-transfer
 
 This one transfers data that come from the geoip-base module loaded on other server, so you don't have to use the resource-intensive geoip-base everywhere. It may be needed by the "geoip-chanban".

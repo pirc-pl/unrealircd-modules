@@ -25,7 +25,6 @@ module
 long UMODE_BOT = 0L;
 
 int bot_mtag_is_ok(Client *client, char *name, char *value);
-int bot_mtag_can_send(Client *target);
 void mtag_add_bot(Client *client, MessageTag *recv_mtags, MessageTag **mtag_list, char *signature);
 
 ModuleHeader MOD_HEADER = {
@@ -42,7 +41,6 @@ MOD_INIT(){
 	memset(&mtag, 0, sizeof(mtag));
 	mtag.name = "inspircd.org/bot";
 	mtag.is_ok = bot_mtag_is_ok;
-	mtag.can_send = bot_mtag_can_send;
 	mtag.flags = MTAG_HANDLER_FLAGS_NO_CAP_NEEDED;
 	if(!MessageTagHandlerAdd(modinfo->handle, &mtag)){
 		config_error("[%s] Failed to request bot client tag: %s.", MOD_HEADER.name, ModuleGetErrorStr(modinfo->handle));
@@ -87,9 +85,5 @@ void mtag_add_bot(Client *client, MessageTag *recv_mtags, MessageTag **mtag_list
 		}
 		AddListItem(m, *mtag_list);
 	}
-}
-
-int bot_mtag_can_send(Client *target){
-	return 1;
 }
 

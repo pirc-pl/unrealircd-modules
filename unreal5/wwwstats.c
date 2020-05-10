@@ -15,7 +15,7 @@ module
                 "loadmodule \"third/wwwstats\";";
                 "then create a valid configuration block as in the example below:";
                 "wwwstats {";
-				" socket-path \"/tmp/wwwstats.sock\"; // do not specify if you don't want the socket";
+				" socket-path \"/tmp/wwwstats.sock\"; // this option is REQUIRED";
 				"};";
 				"And /REHASH the IRCd.";
 				"";
@@ -54,8 +54,6 @@ struct asendInfo_s {
 	char *tmpbuf;
 };
 
-typedef struct chanStats_s chanStats;
-typedef struct channelInfo_s channelInfo;
 typedef struct asendInfo_s asendInfo;
 
 int counter;
@@ -166,7 +164,7 @@ int wwwstats_configrun(ConfigFile *cf, ConfigEntry *ce, int type) {
 
 ModuleHeader MOD_HEADER = {
 	"third/wwwstats",   /* Name of module */
-	"5.0", /* Version */
+	"5.1", /* Version */
 	"Provides data for network stats", /* Short description of module */
 	"rocket, k4be@PIRC",
 	"unrealircd-5"

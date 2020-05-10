@@ -74,8 +74,6 @@ int wwwstats_configtest(ConfigFile *cf, ConfigEntry *ce, int type, int *errs);
 int wwwstats_configposttest(int *errs);
 int wwwstats_configrun(ConfigFile *cf, ConfigEntry *ce, int type);
 
-chanStats *chans, *chans_last;
-
 // config file stuff, based on Gottem's module
 
 static char *socket_path;
@@ -212,9 +210,6 @@ MOD_LOAD(){
 	}
 
 	counter = 0;
-
-	chans = NULL;
-	chans_last = NULL;
 
 	if(socket_path){
 		stats_socket = socket(PF_UNIX, SOCK_STREAM, 0);

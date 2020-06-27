@@ -406,7 +406,7 @@ char *generate_token(const char *payload){
 	b64url(b64payload);
 	snprintf(b64data, b64data_size, "%s.%s", b64header, b64payload); // generate first part of the token
 	if(cfg.method != METHOD_NONE){
-		hmac = safe_alloc(hmac_size(cfg.method));
+		hmac = safe_alloc(EVP_MAX_MD_SIZE);
 		hmac_hash(cfg.method, cfg.secret, strlen(cfg.secret), b64data, strlen(b64data), hmac, &hmacsize); // calculate the signature hash
 		b64_encode(hmac, hmacsize, b64sig, b64sig_size);
 		b64url(b64sig);

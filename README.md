@@ -252,6 +252,21 @@ This one implements the IRCv3 [MONITOR command](https://ircv3.net/specs/core/mon
 
 This one adds an `inspircd.org/bot` message tag to each message sent by a bot (marked with +B flag). This is compatible with more than one existing server software, and can be used bots to avoid replying to other bots. In my opinion, a metadata key is the superior solution, but so far message tags are much more universally supported.
 
+### extjwt
+
+This one provides an `EXTJWT` command to generate tokens for authenticating to external web services. It is currently based on the "Work In Progress" (that means the spec can change and then the module and clients will need updating) specification available here: [EXTJWT specification](https://github.com/ircv3/ircv3-specifications/blob/f3facfbe5f2686f2ab2a3322cadd31dacd3f5177/extensions/extjwt.md).
+
+The `vfy` claim is not (yet) supported.
+
+The module looks for a config block:
+```C
+extjwt {
+	method "HS256"; // must be one of: NONE (not recommended), HS256, HS384, HS512
+	expire-after 30; // seconds
+	secret "somepassword"; // do not set when METHOD "NONE"
+};
+```
+
 ## Unreal 4.x.x modules
 
 Remember that modules listed below are now unsupported.

@@ -7,16 +7,16 @@
  /*** <<<MODULE MANAGER START>>>
 module
 {
-        documentation "https://github.com/pirc-pl/unrealircd-modules/blob/master/README.md#extjwt";
-        troubleshooting "In case of problems, contact k4be on irc.pirc.pl.";
-        min-unrealircd-version "5.*";
-        post-install-text {
-                "The module is installed. Now all you need to do is add a loadmodule line:";
-                "loadmodule \"third/extjwt\";";
-  				"And create relevant config block, then /REHASH the IRCd.";
-				"The configuration is described in the documentation:";
-				"https://github.com/pirc-pl/unrealircd-modules/blob/master/README.md#extjwt";
-        }
+	documentation "https://github.com/pirc-pl/unrealircd-modules/blob/master/README.md#extjwt";
+	troubleshooting "In case of problems, contact k4be on irc.pirc.pl.";
+	min-unrealircd-version "5.*";
+	post-install-text {
+		"The module is installed. Now all you need to do is add a loadmodule line:";
+		"loadmodule \"third/extjwt\";";
+		"And create relevant config block, then /REHASH the IRCd.";
+		"The configuration is described in the documentation:";
+		"https://github.com/pirc-pl/unrealircd-modules/blob/master/README.md#extjwt";
+	}
 }
 *** <<<MODULE MANAGER END>>>
 */

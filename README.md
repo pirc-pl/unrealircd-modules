@@ -256,7 +256,7 @@ This one adds an `inspircd.org/bot` message tag to each message sent by a bot (m
 
 This one provides an `EXTJWT` command to generate tokens for authenticating to external web services. It is currently based on the "Work In Progress" (that means the spec can change and then the module and clients will need updating) specification available here: [EXTJWT specification](https://github.com/ircv3/ircv3-specifications/blob/f3facfbe5f2686f2ab2a3322cadd31dacd3f5177/extensions/extjwt.md).
 
-The `vfy` claim is not (yet) supported.
+To use the `vfy` claim (`verify-url` option) you must provide your own verification facility, separate for each service (and for the default JWT when applicable). See the specification for details.
 
 The module looks for a config block:
 ```C
@@ -264,6 +264,15 @@ extjwt {
 	method "HS256"; // must be one of: NONE (not recommended), HS256, HS384, HS512
 	expire-after 30; // seconds
 	secret "somepassword"; // do not set when METHOD "NONE"
+	service "test" { // optional service block
+		method "HS512"; // supported: HS256, HS384, HS512, will be inherited from default if not given
+		secret "anotherpassword"; // required
+		expire-after 60; // seconds, will be inherited from default if not given
+		verify-url "https://example.com/verify/?t=%s"; // optional, won't be inherited, must be http or https, must contain %s
+	};
+	service "test2" {
+		secret "yetanotherpassword";
+	};
 };
 ```
 

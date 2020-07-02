@@ -40,7 +40,7 @@ module
 #define METHOD_ES512 9
 #define METHOD_NONE 10
 
-#define NEEDS_CERT(x) (x>=4 && x<=9)
+#define NEEDS_KEY(x) (x>=4 && x<=9)
 
 #define URL_LENGTH 4096
 #define MODES_SIZE 41 // about 10 mode chars
@@ -97,7 +97,7 @@ ModuleHeader MOD_HEADER = {
 
 struct {
 	int have_secret;
-	int have_cert;
+	int have_key;
 	int have_method;
 	int have_expire;
 	int have_vfy;
@@ -296,11 +296,11 @@ extjwt {
 	method "HS256"; // must be one of: NONE (not recommended), HS256, HS384, HS512, ES256, ES384, ES512, RS256, RS384, RS512
 	expire-after 30; // seconds
 	secret "somepassword"; // do not set when using ES*, RS* or NONE method, required for HS* method
-//	certificate "somefile.pem"; // do not set when using HS* or NONE method, required for ES* and RS* method
+//	key "somefile.pem"; // do not set when using HS* or NONE method, required for ES* and RS* method
 	service "test" { // optional service block
 		method "ES512"; // supported: HS256, HS384, HS512, ES256, ES384, ES512, RS256, RS384, RS512
 //		secret "anotherpassword"; // required for HS methods
-		certificate "someotherfile.pem"; // required for ES and RS methods
+		key "someotherfile.pem"; // required for ES and RS methods
 		expire-after 60; // seconds, will be inherited from default if not given
 		verify-url "https://example.com/verify/?t=%s"; // optional, won't be inherited, must be http or https, must contain %s
 	};
@@ -367,13 +367,13 @@ int extjwt_configtest(ConfigFile *cf, ConfigEntry *ce, int type, int *errs){
 			}
 			continue;
 		}
-		if (!strcmp(cep->ce_varname, "certificate")) {
-			if(cfg_state.have_cert){
+		if (!strcmp(cep->ce_varname, "key")) {
+			if(cfg_state.have_key){
 				config_error("%s:%i: duplicate %s::%s item", cep->ce_fileptr->cf_filename, cep->ce_varlinenum, MYCONF, cep->ce_varname);
 				errors++;
 				continue;
 			}
-			cfg_state.have_cert = 1;
+			cfg_state.have_key = 1;
 			safe_free(cfg_state.key_filename);
 			safe_strdup(cfg_state.key_filename, cep->ce_vardata);
 			convert_to_absolute_path(&cfg_state.key_filename, CONFDIR);
@@ -455,7 +455,7 @@ int extjwt_configtest(ConfigFile *cf, ConfigEntry *ce, int type, int *errs){
 					continue;
 				}
 
-				if (!strcmp(cep2->ce_varname, "certificate")) {
+				if (!strcmp(cep2->ce_varname, "key")) {
 					if(have_scert){
 						config_error("%s:%i: duplicate %s::service::%s item", cep2->ce_fileptr->cf_filename, cep2->ce_varlinenum, MYCONF, cep2->ce_varname);
 						errors++;
@@ -507,31 +507,31 @@ int extjwt_configtest(ConfigFile *cf, ConfigEntry *ce, int type, int *errs){
 				errors++;
 				continue;
 			}
-			if(have_ssecret && NEEDS_CERT(have_smethod)) {
-				config_error("%s:%i: invalid %s::service entry (this method needs %s::service::certificate and not %s::service::secret option)", cep->ce_fileptr->cf_filename, cep->ce_varlinenum, MYCONF, MYCONF, MYCONF); // Rep0t error
+			if(have_ssecret && NEEDS_KEY(have_smethod)) {
+				config_error("%s:%i: invalid %s::service entry (this method needs %s::service::key and not %s::service::secret option)", cep->ce_fileptr->cf_filename, cep->ce_varlinenum, MYCONF, MYCONF, MYCONF); // Rep0t error
 				errors++;
 				continue;
 			}
-			if(have_scert && !NEEDS_CERT(have_smethod)) {
-				config_error("%s:%i: invalid %s::service entry (this method needs %s::service::secret and not %s::service::certificate option)", cep->ce_fileptr->cf_filename, cep->ce_varlinenum, MYCONF, MYCONF, MYCONF); // Rep0t error
+			if(have_scert && !NEEDS_KEY(have_smethod)) {
+				config_error("%s:%i: invalid %s::service entry (this method needs %s::service::secret and not %s::service::key option)", cep->ce_fileptr->cf_filename, cep->ce_varlinenum, MYCONF, MYCONF, MYCONF); // Rep0t error
 				errors++;
 				continue;
 			}
-			if(!have_ssecret && !NEEDS_CERT(have_smethod)) {
+			if(!have_ssecret && !NEEDS_KEY(have_smethod)) {
 				config_error("%s:%i: invalid %s::service entry (must contain %s::service::secret option)", cep->ce_fileptr->cf_filename, cep->ce_varlinenum, MYCONF, MYCONF); // Rep0t error
 				errors++;
 				continue;
 			}
-			if(!have_scert && NEEDS_CERT(have_smethod)) {
-				config_error("%s:%i: invalid %s::service entry (must contain %s::service::certificate option)", cep->ce_fileptr->cf_filename, cep->ce_varlinenum, MYCONF, MYCONF); // Rep0t error
+			if(!have_scert && NEEDS_KEY(have_smethod)) {
+				config_error("%s:%i: invalid %s::service entry (must contain %s::service::key option)", cep->ce_fileptr->cf_filename, cep->ce_varlinenum, MYCONF, MYCONF); // Rep0t error
 				errors++;
 				continue;
 			}
-			if(NEEDS_CERT(have_smethod) && have_scert && sfilename){
+			if(NEEDS_KEY(have_smethod) && have_scert && sfilename){
 				char *keyerr;
 				keyerr = test_key(sfilename, have_smethod);
 				if(keyerr){
-					config_error("Invalid certificate file specified for %s::certificate: %s", MYCONF, keyerr);
+					config_error("Invalid key file specified for %s::key: %s", MYCONF, keyerr);
 					errors++;
 				}
 			}
@@ -554,27 +554,27 @@ int extjwt_configposttest(int *errs) {
 		config_error("No %s::method specfied!", MYCONF);
 		errors++;
 	} else {
-		if(cfg_state.have_method != METHOD_NONE && !NEEDS_CERT(cfg_state.have_method) && !cfg_state.have_secret){
+		if(cfg_state.have_method != METHOD_NONE && !NEEDS_KEY(cfg_state.have_method) && !cfg_state.have_secret){
 			config_error("No %s::secret specfied as required by requested method!", MYCONF);
 			errors++;
 		}
-		if((cfg_state.have_method == METHOD_NONE || NEEDS_CERT(cfg_state.have_method)) && cfg_state.have_secret){
+		if((cfg_state.have_method == METHOD_NONE || NEEDS_KEY(cfg_state.have_method)) && cfg_state.have_secret){
 			config_error("A %s::secret specfied but it should not be when using requested method!", MYCONF);
 			errors++;
 		}
-		if(NEEDS_CERT(cfg_state.have_method) && !cfg_state.have_cert){
-			config_error("No %s::certificate specfied as required by requested method!", MYCONF);
+		if(NEEDS_KEY(cfg_state.have_method) && !cfg_state.have_key){
+			config_error("No %s::key specfied as required by requested method!", MYCONF);
 			errors++;
 		}
-		if(!NEEDS_CERT(cfg_state.have_method) && cfg_state.have_cert){
-			config_error("A %s::certificate specfied but it should not be when using requested method!", MYCONF);
+		if(!NEEDS_KEY(cfg_state.have_method) && cfg_state.have_key){
+			config_error("A %s::key specfied but it should not be when using requested method!", MYCONF);
 			errors++;
 		}
-		if(NEEDS_CERT(cfg_state.have_method) && cfg_state.have_cert && cfg_state.key_filename){
+		if(NEEDS_KEY(cfg_state.have_method) && cfg_state.have_key && cfg_state.key_filename){
 			char *keyerr;
 			keyerr = test_key(cfg_state.key_filename, cfg_state.have_method);
 			if(keyerr){
-				config_error("Invalid certificate file specified for %s::certificate: %s", MYCONF, keyerr);
+				config_error("Invalid key file specified for %s::key: %s", MYCONF, keyerr);
 				errors++;
 			}
 		}
@@ -620,7 +620,7 @@ int extjwt_configrun(ConfigFile *cf, ConfigEntry *ce, int type){ // actually use
 			cfg.secret = strdup(cep->ce_vardata);
 			continue;
 		}
-		if(!strcmp(cep->ce_varname, "certificate")){
+		if(!strcmp(cep->ce_varname, "key")){
 			filename = strdup(cep->ce_vardata);
 			convert_to_absolute_path(&filename, CONFDIR);
 			f = fopen(filename, "rb");
@@ -657,7 +657,7 @@ int extjwt_configrun(ConfigFile *cf, ConfigEntry *ce, int type){ // actually use
 					(*ss)->cfg->secret = strdup(cep2->ce_vardata);
 					continue;
 				}
-				if(!strcmp(cep2->ce_varname, "certificate")){
+				if(!strcmp(cep2->ce_varname, "key")){
 					filename = strdup(cep2->ce_vardata);
 					convert_to_absolute_path(&filename, CONFDIR);
 					f = fopen(filename, "rb");

@@ -264,11 +264,11 @@ extjwt {
 	method "HS256"; // must be one of: NONE (not recommended), HS256, HS384, HS512, ES256, ES384, ES512, RS256, RS384, RS512
 	expire-after 30; // seconds
 	secret "somepassword"; // do not set when using ES*, RS* or NONE method, required for HS* method
-//	certificate "somefile.pem"; // do not set when using HS* or NONE method, required for ES* and RS* method
+//	key "somefile.pem"; // path to the private key PEM file placed in conf/ - do not set when using HS* or NONE method, required for ES* and RS* method
 	service "test" { // optional service block
 		method "ES512"; // supported: HS256, HS384, HS512, ES256, ES384, ES512, RS256, RS384, RS512
 //		secret "anotherpassword"; // required for HS methods
-		certificate "someotherfile.pem"; // required for ES and RS methods
+		key "someotherfile.pem"; // required for ES and RS methods
 		expire-after 60; // seconds, will be inherited from default if not given
 		verify-url "https://example.com/verify/?t=%s"; // optional, won't be inherited, must be http or https, must contain %s
 	};

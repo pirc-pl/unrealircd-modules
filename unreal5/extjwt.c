@@ -90,7 +90,7 @@ const char payload_chan_pattern[] = ",\"channel\":\"%s\",\"joined\":%lu,\"cmodes
 
 ModuleHeader MOD_HEADER = {
 	"third/extjwt",
-	"5.0test1",
+	"5.0test2",
 	"Command /EXTJWT (web service authorization)", 
 	"k4be@PIRC",
 	"unrealircd-5",

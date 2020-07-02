@@ -77,6 +77,7 @@ void free_services(struct jwt_service **services);
 struct jwt_service *find_jwt_service(struct jwt_service *services, const char *name);
 int valid_integer_string(const char *in, int min, int max);
 char *test_key(const char *file, int method);
+char *read_file_contents(const char *file, int absolute, int *size);
 int method_from_string(const char *in);
 #ifdef NEW_ISUPPORT
 char *extjwt_isupport_param(void);
@@ -205,8 +206,6 @@ int vfy_url_is_valid(const char *string){
 }
 
 char *test_key(const char *file, int method){ // returns NULL when valid
-	FILE *f = NULL;
-	char *filename = NULL;
 	int fsize;
 	char *fcontent = NULL;
 	char *retval = NULL;
@@ -225,21 +224,15 @@ char *test_key(const char *file, int method){ // returns NULL when valid
 				retval = "Internal error (invalid type)";
 				continue;
 		}
-		f = fopen(file, "rb");
-		if(!f){
+		fcontent = read_file_contents(file, 1, &fsize);
+		if(!fcontent){
 			retval = "Cannot open file";
 			break;
 		}
-		fseek(f, 0, SEEK_END);
-		fsize = ftell(f);
-		fseek(f, 0, SEEK_SET);
-		fcontent = safe_alloc(fsize+1);
-		fsize = fread(fcontent, 1, fsize, f);
 		if(fsize == 0){
 			retval = "File is empty";
 			break;
 		}
-		fcontent[fsize] = '\0';
 		if(!(bufkey = BIO_new_mem_buf(fcontent, fsize))){
 			retval = "Unknown error";
 			break;
@@ -254,9 +247,6 @@ char *test_key(const char *file, int method){ // returns NULL when valid
 			break;
 		}
 	} while(0);
-	safe_free(filename);
-	if(f)
-		fclose(f);
 	safe_free(fcontent);
 	if(bufkey)
 		BIO_free(bufkey);
@@ -594,9 +584,6 @@ int extjwt_configposttest(int *errs) {
 
 int extjwt_configrun(ConfigFile *cf, ConfigEntry *ce, int type){ // actually use the new configuration data
 	ConfigEntry *cep, *cep2;
-	FILE *f;
-	char *filename = NULL;
-	int fsize;
 	struct jwt_service **ss = &jwt_services;
 	if(*ss)
 		ss = &((*ss)->next);
@@ -621,19 +608,7 @@ int extjwt_configrun(ConfigFile *cf, ConfigEntry *ce, int type){ // actually use
 			continue;
 		}
 		if(!strcmp(cep->ce_varname, "key")){
-			filename = strdup(cep->ce_vardata);
-			convert_to_absolute_path(&filename, CONFDIR);
-			f = fopen(filename, "rb");
-			if(!f) // FIXME not reporting error
-				continue;
-			fseek(f, 0, SEEK_END);
-			fsize = ftell(f);
-			fseek(f, 0, SEEK_SET);
-			cfg.secret = safe_alloc(fsize + 1);
-			fsize = fread(cfg.secret, 1, fsize, f);
-			cfg.secret[fsize] = '\0';
-			safe_free(filename);
-			fclose(f);
+			cfg.secret = read_file_contents(cep->ce_vardata, 0, NULL);
 			continue;
 		}
 		if(!strcmp(cep->ce_varname, "verify-url")){
@@ -658,19 +633,7 @@ int extjwt_configrun(ConfigFile *cf, ConfigEntry *ce, int type){ // actually use
 					continue;
 				}
 				if(!strcmp(cep2->ce_varname, "key")){
-					filename = strdup(cep2->ce_vardata);
-					convert_to_absolute_path(&filename, CONFDIR);
-					f = fopen(filename, "rb");
-					if(!f) // FIXME not reporting error
-						continue;
-					fseek(f, 0, SEEK_END);
-					fsize = ftell(f);
-					fseek(f, 0, SEEK_SET);
-					(*ss)->cfg->secret = safe_alloc(fsize + 1);
-					fsize = fread((*ss)->cfg->secret, 1, fsize, f);
-					(*ss)->cfg->secret[fsize] = '\0';
-					safe_free(filename);
-					fclose(f);
+					(*ss)->cfg->secret = read_file_contents(cep2->ce_vardata, 0, NULL);
 					continue;
 				}
 				if(!strcmp(cep2->ce_varname, "verify-url")){
@@ -682,6 +645,34 @@ int extjwt_configrun(ConfigFile *cf, ConfigEntry *ce, int type){ // actually use
 		}
 	}
 	return 1;
+}
+
+char *read_file_contents(const char *file, int absolute, int *size){
+	FILE *f = NULL;
+	int fsize;
+	char *filename = NULL;
+	char *buf = NULL;
+	safe_strdup(filename, file);
+	do {
+		if(!absolute)
+			convert_to_absolute_path(&filename, CONFDIR);
+		f = fopen(filename, "rb");
+		if(!f)
+			break;
+		fseek(f, 0, SEEK_END);
+		fsize = ftell(f);
+		fseek(f, 0, SEEK_SET);
+		buf = safe_alloc(fsize + 1);
+		fsize = fread(buf, 1, fsize, f);
+		buf[fsize] = '\0';
+		if(size)
+			*size = fsize;
+		fclose(f);
+	} while(0);
+	safe_free(filename);
+	if(!buf && size)
+		*size = 0;
+	return buf;
 }
 
 CMD_FUNC(cmd_extjwt){

@@ -283,14 +283,25 @@ extjwt {
 These methods allow you to pass your public key to someone verifying your tokens, without giving them chance to generate their own signed tokens (they would need to have the private key for that). Below is a quick reference for generating the key pairs.
 
 To generate RS256, RS384 or RS512 private key (to add to your IRCd):
-`openssl genrsa -out privkey.pem 4096`
+```
+openssl genrsa -out privkey.pem 4096
+```
+
 To generate matching public key (to use for token verification):
-`openssl rsa -in privkey.pem -pubout > pubkey.pem`
+```
+openssl rsa -in privkey.pem -pubout > pubkey.pem
+```
+
 
 To generate ES256, ES384 or ES512 private key (to add to your IRCd):
-`openssl ecparam -genkey -name secp521r1 -noout -out privkey.pem`
+```
+openssl ecparam -genkey -name secp521r1 -noout -out privkey.pem
+```
+
 To generate matching public key (to use for token verification):
-`openssl ec -in privkey.pem -pubout -out pubkey.pem`
+```
+openssl ec -in privkey.pem -pubout -out pubkey.pem
+```
 
 Of course, substitute your preferred file names for `pubkey.pem` and `privkey.pem`.
 

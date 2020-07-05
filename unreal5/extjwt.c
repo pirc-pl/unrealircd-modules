@@ -22,7 +22,6 @@ module
 */
 
 #include "unrealircd.h"
-#include <openssl/opensslv.h>
 
 // internal definitions
 

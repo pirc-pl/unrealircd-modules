@@ -22,6 +22,9 @@ module
 */
 
 #include "unrealircd.h"
+#include <openssl/opensslv.h>
+
+// internal definitions
 
 #define MSG_EXTJWT	"EXTJWT"
 #define MYCONF "extjwt"
@@ -40,7 +43,7 @@ module
 #define METHOD_ES512 9
 #define METHOD_NONE 10
 
-#define NEEDS_KEY(x) (x>=4 && x<=9)
+#define NEEDS_KEY(x) (x>=METHOD_RS256 && x<=METHOD_ES512)
 
 #define URL_LENGTH 4096
 #define MODES_SIZE 41 // about 10 mode chars
@@ -48,6 +51,19 @@ module
 #define MAX_TOKEN_CHUNK (510-sizeof(extjwt_message_pattern)-HOSTLEN-CHANNELLEN)
 #define PAYLOAD_CHAN_SIZE (sizeof(payload_chan_pattern)+CHANNELLEN+TS_LENGTH+MODES_SIZE)
 #define PAYLOAD_SIZE (sizeof(payload_pattern_with_url)+sizeof(payload_chan_pattern)+TS_LENGTH+HOSTLEN+NICKLEN+NICKLEN+URL_LENGTH+MODES_SIZE+PAYLOAD_CHAN_SIZE)
+
+// OpenSSL 1.0.x compatibility
+
+#if (OPENSSL_VERSION_NUMBER < 0x10100000L)
+void ECDSA_SIG_get0(const ECDSA_SIG *sig, const BIGNUM **pr, const BIGNUM **ps){
+	if (pr != NULL)
+		*pr = sig->r;
+	if (ps != NULL)
+		*ps = sig->s;
+}
+#endif
+
+// struct definitions
 
 struct extjwt_config {
 	time_t exp_delay;
@@ -61,6 +77,8 @@ struct jwt_service {
 	struct extjwt_config *cfg;
 	struct jwt_service *next;
 };
+
+// function declarations
 
 CMD_FUNC(cmd_extjwt);
 char *make_payload(Client *client, Channel *channel, struct extjwt_config *config);
@@ -83,14 +101,18 @@ int method_from_string(const char *in);
 char *extjwt_isupport_param(void);
 #endif
 
+// string constants
+
 const char extjwt_message_pattern[] = ":%s EXTJWT %s %s %s%s";
 const char payload_pattern[] = "{\"exp\":%lu,\"iss\":\"%s\",\"sub\":\"%s\",\"account\":\"%s\",\"umodes\":[%s]%s}";
 const char payload_pattern_with_url[] = "{\"exp\":%lu,\"iss\":\"%s\",\"sub\":\"%s\",\"account\":\"%s\",\"vfy\":\"%s\",\"umodes\":[%s]%s}";
 const char payload_chan_pattern[] = ",\"channel\":\"%s\",\"joined\":%lu,\"cmodes\":[%s]";
 
+// global structs
+
 ModuleHeader MOD_HEADER = {
 	"third/extjwt",
-	"5.0test2",
+	"5.0.1",
 	"Command /EXTJWT (web service authorization)", 
 	"k4be@PIRC",
 	"unrealircd-5",

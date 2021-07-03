@@ -199,7 +199,7 @@ Usage example:
 
 ### metadata
 
-This one implements the METADATA command, allowing users to set their avatars, message colouring, status texts etc. It is currently based on the "Work In Progress" (that means the spec can change and then the module and clients will need updating) specification available here: [metadata specification](https://github.com/ircv3/ircv3-specifications/blob/a41c7ab561be6852480d62b99272ae500645acc1/core/metadata-3.2.md).
+This one implements the METADATA command, allowing users to set their avatars, message colouring, status texts etc. It is currently based on the "Work In Progress" (that means the spec can change and then the module and clients will need updating) specification available here: [metadata specification](https://gist.github.com/k4bek4be/92c2937cefd49990fbebd001faf2b237). It is known to work with the [PIRC web client](https://github.com/pirc-pl/pirc-gateway) and [IRCcloud](https://www.irccloud.com/).
 
 For compatibility, the module uses two CAPs: `draft/metadata` and `draft/metadata-notify-2`, and also an ISUPPORT tag of `METADATA`.
 

@@ -6,7 +6,7 @@ There are also older modules, known to work on the unrealircd-4.2.0 version, in 
 ## Unreal 6.x.x modules
 
 ### metadata
-NOTE: [unreal 5 version is documented here](#metadata-5)
+NOTE: [unreal 5 version is documented here](#metadata-u5)
 
 This one implements the METADATA command, allowing users to set their avatars, message colouring, status texts etc. It is currently based on the "Work In Progress" (that means the spec can change and then the module and clients will need updating) specification available here: [metadata specification](https://gist.github.com/k4bek4be/92c2937cefd49990fbebd001faf2b237). It is known to work with the [PIRC web client](https://github.com/pirc-pl/pirc-gateway) and [IRCcloud](https://www.irccloud.com/). There's no widespread support for METADATA and no one seems to want to change this. I find this functionality useful, so I am maintaining it though.
 
@@ -225,7 +225,7 @@ Usage example:
 
 `/findchmodes +H`
 
-### metadata-5
+### metadata (u5)
 
 This one implements the METADATA command, allowing users to set their avatars, message colouring, status texts etc. It is currently based on the "Work In Progress" (that means the spec can change and then the module and clients will need updating) specification available here: [metadata specification](https://gist.github.com/k4bek4be/92c2937cefd49990fbebd001faf2b237). It is known to work with the [PIRC web client](https://github.com/pirc-pl/pirc-gateway) and [IRCcloud](https://www.irccloud.com/).
 

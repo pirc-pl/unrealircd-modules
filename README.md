@@ -1,7 +1,35 @@
 # unrealircd-modules
-These are additional modules for [UnrealIRCD](https://www.unrealircd.org/). The modules contained in the directory "unreal5" are developed for the unrealircd-5.0.0 version.
+These are additional modules for [UnrealIRCD](https://www.unrealircd.org/). The modules contained in the directory "unreal6" are developed for the unrealircd-6.0.0 version.
 
-There are also older modules, known to work on the unrealircd-4.2.0 version, in the directory "unreal4". These are unsupported. That means you can try to download and use them, but nobody will help you with these versions.
+There are also older modules, known to work on the unrealircd-4.2.0 version, in the directory "unreal4", and on unrealircd-5.2.0, in "unreal5". These are unsupported. That means you can try to download and use them, but nobody will help you with these versions (unless it's a bug in unreal5 module).
+
+## Unreal 6.x.x modules
+
+### metadata
+NOTE: [unreal 5 version is documented here](#metadata-5)
+
+This one implements the METADATA command, allowing users to set their avatars, message colouring, status texts etc. It is currently based on the "Work In Progress" (that means the spec can change and then the module and clients will need updating) specification available here: [metadata specification](https://gist.github.com/k4bek4be/92c2937cefd49990fbebd001faf2b237). It is known to work with the [PIRC web client](https://github.com/pirc-pl/pirc-gateway) and [IRCcloud](https://www.irccloud.com/). There's no widespread support for METADATA and no one seems to want to change this. I find this functionality useful, so I am maintaining it though.
+
+For compatibility, the module uses two CAPs: `draft/metadata` and `draft/metadata-notify-2`, and also an ISUPPORT tag of `METADATA`.
+
+The module looks for a config block:
+```C
+metadata {
+	max-user-metadata 10;	// maximum metadata count for a single user
+	max-channel-metadata 10;	// maximum metadata count for a single channel
+	max-subscriptions 10;	// maximum number of metadata keys an user can subscribe to
+};
+```
+If the config is not specified, the above defaults are used.
+
+Short usage explanation (for "avatar" metadata key name):
+
+- Set the avatar URL for your nick: `/metadata * set avatar :https://example.com/example.png`
+- Remove your avatar: `/metadata * set avatar`
+- Subscribe to avatars of users (so server will send them for you): `/metadata * sub avatar`
+- The notification sent by the server: `:irc.example.com METADATA someone avatar * :https://example.com/example.png`
+
+Please keep these * signs intact.
 
 ## Unreal 5.x.x modules
 
@@ -197,7 +225,7 @@ Usage example:
 
 `/findchmodes +H`
 
-### metadata
+### metadata-5
 
 This one implements the METADATA command, allowing users to set their avatars, message colouring, status texts etc. It is currently based on the "Work In Progress" (that means the spec can change and then the module and clients will need updating) specification available here: [metadata specification](https://gist.github.com/k4bek4be/92c2937cefd49990fbebd001faf2b237). It is known to work with the [PIRC web client](https://github.com/pirc-pl/pirc-gateway) and [IRCcloud](https://www.irccloud.com/).
 
@@ -209,7 +237,7 @@ metadata {
 	max-user-metadata 10;	// maximum metadata count for a single user
 	max-channel-metadata 10;	// maximum metadata count for a single channel
 	max-subscriptions 10;	// maximum number of metadata keys an user can subscribe to
-	enable-debug 0;	// set to 1 for ircops to receive all METADATA commands (floody)
+	enable-debug 0; // set to 1 for ircops to receive all METADATA commands (floody)
 };
 ```
 If the config is not specified, the above defaults are used.

@@ -51,6 +51,16 @@ metadata-db {
 ```
 If the config is not specified, the above defaults are used.
 
+### unauthban
+NOTE: [unreal 5 version is documented here](#unauthban-u5)
+
+This one is created as an attempt of making behaviour of the +R chanmode more selective. It allows things like:
+
+`~unauth:*!*@*.someisp.com` - lets users from someisp in only when they are registered - this is the particular target
+of creating this module.
+
+`~unauth:~quiet:~channel:#channel` - allows users coming from #channel to talk only when they are registered.
+
 ## Unreal 5.x.x modules
 
 ### geoip-base
@@ -112,7 +122,7 @@ Do not load this module on more than one server on the network. Correctly config
 
 This one transfers data that come from the geoip-base module loaded on other server, so you don't have to use the resource-intensive geoip-base everywhere. It may be needed by the "geoip-chanban".
 
-### unauthban
+### unauthban (u5)
 This one is created as an attempt of making behaviour of the +R chanmode more selective. It allows things like:
 
 `~I:*!*@*.someisp.com` - lets users from someisp in only when they are registered - this is the particular target

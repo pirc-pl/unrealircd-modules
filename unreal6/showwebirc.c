@@ -13,8 +13,11 @@ module
         post-install-text {
                 "The module is installed. Now all you need to do is add a loadmodule line:";
                 "loadmodule \"third/showwebirc\";";
+                "Configure, who can see the webirc and websocket info (default is NOBODY!):";
+                "set { whois-details { webirc { everyone none; self full; oper full; }; websocket { everyone none; self full; oper full; } } }";
   				"And /REHASH the IRCd.";
-				"The module does not need any other configuration.";
+  				"Please note that you need to use the '/WHOIS nick nick' command to see websocket info";
+  				"for remote users.";
         }
 }
 *** <<<MODULE MANAGER END>>>

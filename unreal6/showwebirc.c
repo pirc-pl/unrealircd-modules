@@ -11,13 +11,13 @@ module
         troubleshooting "In case of problems, contact k4be on irc.pirc.pl.";
         min-unrealircd-version "6.*";
         post-install-text {
-                "The module is installed. Now all you need to do is add a loadmodule line:";
-                "loadmodule \"third/showwebirc\";";
-                "Configure, who can see the webirc and websocket info (default is NOBODY!):";
-                "set { whois-details { webirc { everyone none; self full; oper full; }; websocket { everyone none; self full; oper full; } } }";
-  				"And /REHASH the IRCd.";
-  				"Please note that you need to use the '/WHOIS nick nick' command to see websocket info";
-  				"for remote users.";
+			"The module is installed. Now all you need to do is add a loadmodule line:";
+			"loadmodule \"third/showwebirc\";";
+			"Configure, who can see the webirc and websocket info (default is NOBODY!):";
+			"set { whois-details { webirc { everyone none; self full; oper full; }; websocket { everyone none; self full; oper full; } } }";
+			"And /REHASH the IRCd.";
+			"Please note that you need to use the '/WHOIS nick nick' command to see websocket info";
+			"for remote users.";
         }
 }
 *** <<<MODULE MANAGER END>>>

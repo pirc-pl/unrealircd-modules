@@ -61,6 +61,22 @@ of creating this module.
 
 `~unauth:~quiet:~channel:#channel` - allows users coming from #channel to talk only when they are registered.
 
+### showwebirc
+NOTE: [unreal 5 version is documented here](#showwebirc-u5)
+
+This one displays WHOIS info for users that are connected with WEBIRC authorization or using a websocket connection. To use it, you have to configure who can see the lines:
+```
+set {
+	whois-details {
+		webirc { everyone none; self full; oper full; }
+		websocket { everyone none; self full; oper full; }
+	}
+}
+```
+This will display the info to the user itself and all ircops, but not to normal users.
+
+That is different to the older unreal5 module which always allowed everyone to see the info and only displayed WEBIRC.
+
 ## Unreal 5.x.x modules
 
 ### geoip-base
@@ -130,7 +146,7 @@ of creating this module.
 
 `~I:~q:~c:#channel` - allows users coming from #channel to talk only when they are registered.
 
-### showwebirc
+### showwebirc (u5)
 This one appends swhois info to users that are connected with WEBIRC authorization.
 
 ### wwwstats

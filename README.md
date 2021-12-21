@@ -86,6 +86,54 @@ Usage example:
 
 `/findchmodes +H`
 
+### wwwstats
+NOTE: [unreal 5 version is documented here](#wwwstats-u5)
+
+This one allows Unreal to cooperate with a web statistics system. This is the simpler version; see below for an extended module with MySQL support, unfortunately not installable with Unreal's module manager. Do NOT install them both. (Not yet available for unreal 6, please wait patiently for me.)
+
+A single interface is used: UNIX socket. The socket is created on a path specified in config block. When you connect to the socket, the module "spits out" all the current data in JSON format and closes. You can test it with the shell command `socat - UNIX-CONNECT:/tmp/wwwsocket.sock`. It can be used to generate channel lists, server lists, view user counts etc in realtime. Example data:
+```json
+{
+	"clients": 19,
+	"channels": 4,
+	"operators": 18,
+	"servers": 2,
+	"messages": 1459,
+	"serv": [{
+		"name": "test1.example.com",
+		"users": 2
+	}],
+	"chan": [{
+		"name": "#help",
+		"users": 1,
+		"messages": 0
+	}, {
+		"name": "#services",
+		"users": 8,
+		"messages": 971
+	}, {
+		"name": "#opers",
+		"users": 1,
+		"messages": 0,
+		"topic": "This channel has some topic"
+	}, {
+		"name": "#aszxcvbnm",
+		"users": 2,
+		"messages": 485
+	}]
+}
+```
++p / +s channels are always ignored.
+
+Message counters are not very precise, as the module counts only messages going through the server it is loaded on. That means that some channels at some time can not be counted.
+
+The module looks for a config block:
+```C
+wwwstats {
+	socket-path "/tmp/wwwstats.sock";	// this option is REQUIRED
+};
+```
+
 ## Unreal 5.x.x modules
 
 ### geoip-base
@@ -158,7 +206,7 @@ of creating this module.
 ### showwebirc (u5)
 This one appends swhois info to users that are connected with WEBIRC authorization.
 
-### wwwstats
+### wwwstats (u5)
 
 This one allows Unreal to cooperate with a web statistics system. This is the simpler version; see below for an extended module with MySQL support, unfortunately not installable with Unreal's module manager. Do NOT install them both.
 

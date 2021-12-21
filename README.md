@@ -77,6 +77,15 @@ This will display the info to the user itself and all ircops, but not to normal 
 
 That is different to the older unreal5 module which always allowed everyone to see the info and only displayed WEBIRC.
 
+### findchmodes
+NOTE: [unreal 5 version is documented here](#findchmodes-u5)
+
+This one allows IRCoperators to check which channels use certain channel mode. You can use it to check, for example, who has the Channel History enabled.
+
+Usage example:
+
+`/findchmodes +H`
+
 ## Unreal 5.x.x modules
 
 ### geoip-base
@@ -263,7 +272,7 @@ wwwstats {
 };
 ```
 
-### findchmodes
+### findchmodes (u5)
 
 This one allows IRCoperators to check which channels use certain channel mode. You can use it to check, for example, who has the Channel History enabled.
 

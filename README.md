@@ -133,6 +133,12 @@ wwwstats {
 	socket-path "/tmp/wwwstats.sock";	// this option is REQUIRED
 };
 ```
+## List of modules for UnrealIRCd 5 that I am not updating for UnrealIRCd 6
+
+1. `geoip-base`, `geoip-connect-notice`, `geoip-transfer`, `geoip-whois`, `geoip-chanban`: equivalent capabilities are now included inside Unreal 6. Please refer to the IRCd documentation on how to enable them.
+1. `monitor`, `setname`: these are now included inside Unreal 6 with identical functionality and enabled by default.
+1. `extjwt`: this is now included inside Unreal 6. Requires enabling (the `loadmodule` line) and configuration. Check out `modules.optional.conf` file for UnrealIRCd 6 for up-to-date documentation.
+1. `bot-tag`: no longer needed. It provided the old tag name `inspircd.org/bot`. Now the IRCv3 draft standard `draft/bot` is included in both unreal 5 and 6.
 
 ## Unreal 5.x.x modules
 

@@ -133,6 +133,71 @@ wwwstats {
 	socket-path "/tmp/wwwstats.sock";	// this option is REQUIRED
 };
 ```
+### wwwstats-mysql
+This one replaces the "wwwstats" module (do NOT install them both), allowing Unreal to cooperate with a web statistics system. Two interfaces are used:
+
+1. UNIX socket. The socket is created on a path specified in config block. When you connect to the socket, the module "spits out" all the current data in JSON format and closes. You can test it with the shell command `socat - UNIX-CONNECT:/tmp/wwwsocket.sock`. It can be used to generate channel lists, server lists, view user counts etc in realtime. Example data:
+```json
+{
+	"clients": 19,
+	"channels": 4,
+	"operators": 18,
+	"servers": 2,
+	"messages": 1459,
+	"serv": [{
+		"name": "test1.example.com",
+		"users": 2
+	}],
+	"chan": [{
+		"name": "#help",
+		"users": 1,
+		"messages": 0
+	}, {
+		"name": "#services",
+		"users": 8,
+		"messages": 971
+	}, {
+		"name": "#opers",
+		"users": 1,
+		"messages": 0,
+		"topic": "This channel has some topic"
+	}, {
+		"name": "#aszxcvbnm",
+		"users": 2,
+		"messages": 485
+	}]
+}
+```
+2. MySQL database.
+
+Due to incompatibility with the Unreal's module manager, this module must be installed manually.
+
+The module periodically inserts new data to the database, unless the data had not changed since the last insert. This can be used to generate graphs, view previous channel topics etc. You should specify database host (localhost is recommended), user, password and database name. Table structure will be created automatically. The structure is:
+```sql
+CREATE TABLE IF NOT EXISTS `chanlist` (`id` int(11) NOT NULL AUTO_INCREMENT, `date` int(11), `name` char(64), `topic` text, `users` int(11),  `messages` int(11), PRIMARY KEY (`id`), UNIQUE KEY `name` (`name`,`users`,`messages`), KEY `name_3` (`name`), KEY `date` (`date`) )
+CREATE TABLE IF NOT EXISTS `stat` (`id` int(11) NOT NULL AUTO_INCREMENT, `date` int(11), `clients` int(11), `servers` int(11), `messages` int(11), `channels` int(11), PRIMARY KEY (`id`), UNIQUE KEY `changes` (`clients`,`servers`,`messages`,`channels`), KEY `date` (`date`) )
+```
+For obvious reasons you should not enable MySQL on more than one server on your network.
+
+Compiling with mysql support needs mysql client libraries installed on your system. The module is compiled with the command `EXLIBS="-lmysqlclient" make`. If you happen to compile without the EXLIBS option, the module won't load. In such case you should `rm src/modules/third/m_wwwstats.so` and then retry.
+
++p / +s channels are always ignored.
+
+Message counters are not very precise, as the module counts only messages going through the server it is loaded on. That means that some channels at some time can not be counted.
+
+The module looks for a config block:
+```C
+wwwstats {
+	socket-path "/tmp/wwwstats.sock";	// do not specify if you don't want the socket
+	use-mysql;	// remove this line if you don't want mysql
+	mysql-interval "900"; // time in seconds, default is 900 (15 minutes)
+	mysql-host "localhost";
+	mysql-db "database";
+	mysql-user "username";
+	mysql-pass "password";
+};
+```
+
 ## List of modules for UnrealIRCd 5 that I am not updating for UnrealIRCd 6
 
 1. `geoip-base`, `geoip-connect-notice`, `geoip-transfer`, `geoip-whois`, `geoip-chanban`: equivalent capabilities are now included inside Unreal 6. Please refer to the IRCd documentation on how to enable them.
@@ -256,73 +321,6 @@ The module looks for a config block:
 ```C
 wwwstats {
 	socket-path "/tmp/wwwstats.sock";	// this option is REQUIRED
-};
-```
-
-### wwwstats-mysql
-**Note: this module is yet unreleased. Please wait or ask for it.**
-
-This one replaces the "wwwstats" module (do NOT install them both), allowing Unreal to cooperate with a web statistics system. Two interfaces are used:
-
-1. UNIX socket. The socket is created on a path specified in config block. When you connect to the socket, the module "spits out" all the current data in JSON format and closes. You can test it with the shell command `socat - UNIX-CONNECT:/tmp/wwwsocket.sock`. It can be used to generate channel lists, server lists, view user counts etc in realtime. Example data:
-```json
-{
-	"clients": 19,
-	"channels": 4,
-	"operators": 18,
-	"servers": 2,
-	"messages": 1459,
-	"serv": [{
-		"name": "test1.example.com",
-		"users": 2
-	}],
-	"chan": [{
-		"name": "#help",
-		"users": 1,
-		"messages": 0
-	}, {
-		"name": "#services",
-		"users": 8,
-		"messages": 971
-	}, {
-		"name": "#opers",
-		"users": 1,
-		"messages": 0,
-		"topic": "This channel has some topic"
-	}, {
-		"name": "#aszxcvbnm",
-		"users": 2,
-		"messages": 485
-	}]
-}
-```
-2. MySQL database.
-
-Due to incompatibility with the Unreal's module manager, this module must be installed manually.
-
-The module periodically inserts new data to the database, unless the data had not changed since the last insert. This can be used to generate graphs, view previous channel topics etc. You should specify database host (localhost is recommended), user, password and database name. Table structure will be created automatically. The structure is:
-```sql
-CREATE TABLE IF NOT EXISTS `chanlist` (`id` int(11) NOT NULL AUTO_INCREMENT, `date` int(11), `name` char(64), `topic` text, `users` int(11),  `messages` int(11), PRIMARY KEY (`id`), UNIQUE KEY `name` (`name`,`users`,`messages`), KEY `name_3` (`name`), KEY `date` (`date`) )
-CREATE TABLE IF NOT EXISTS `stat` (`id` int(11) NOT NULL AUTO_INCREMENT, `date` int(11), `clients` int(11), `servers` int(11), `messages` int(11), `channels` int(11), PRIMARY KEY (`id`), UNIQUE KEY `changes` (`clients`,`servers`,`messages`,`channels`), KEY `date` (`date`) )
-```
-For obvious reasons you should not enable MySQL on more than one server on your network.
-
-Compiling with mysql support needs mysql client libraries installed on your system. The module is compiled with the command `EXLIBS="-lmysqlclient" make`. If you happen to compile without the EXLIBS option, the module won't load. In such case you should `rm src/modules/third/m_wwwstats.so` and then retry.
-
-+p / +s channels are always ignored.
-
-Message counters are not very precise, as the module counts only messages going through the server it is loaded on. That means that some channels at some time can not be counted.
-
-The module looks for a config block:
-```C
-wwwstats {
-	socket-path "/tmp/wwwstats.sock";	// do not specify if you don't want the socket
-	use-mysql;	// remove this line if you don't want mysql
-	mysql-interval "900"; // time in seconds, default is 900 (15 minutes)
-	mysql-host "localhost";
-	mysql-db "database";
-	mysql-user "username";
-	mysql-pass "password";
 };
 ```
 

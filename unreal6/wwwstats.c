@@ -38,23 +38,16 @@ module
 #define TOPICLEN MAXTOPICLEN
 #endif
 
-#if (UNREAL_VERSION_GENERATION == 5 && UNREAL_VERSION_MAJOR == 0 && UNREAL_VERSION_MINOR < 5)
-#define MESSAGE_SENDTYPE int
-#else
-#define MESSAGE_SENDTYPE SendType
-#endif
-
 #define CHANNEL_MESSAGE_COUNT(channel) moddata_channel(channel, message_count_md).i
 
 int counter;
 time_t init_time;
 
 int stats_socket;
-char send_buf[4096];
 struct sockaddr_un stats_addr;
 ModDataInfo *message_count_md;
 
-int wwwstats_msg(Client *sptr, Channel *chptr, MessageTag *mtags, const char *msg, MESSAGE_SENDTYPE sendtype);
+int wwwstats_msg(Client *sptr, Channel *chptr, MessageTag *mtags, const char *msg, SendType sendtype);
 EVENT(wwwstats_socket_evt);
 char *json_escape(char *d, const char *a);
 void md_free(ModData *md);
@@ -226,7 +219,7 @@ void md_free(ModData *md){
 	md->i = 0;
 }
 
-int wwwstats_msg(Client *sptr, Channel *chptr, MessageTag *mtags, const char *msg, MESSAGE_SENDTYPE sendtype) { // called on channel messages
+int wwwstats_msg(Client *sptr, Channel *chptr, MessageTag *mtags, const char *msg, SendType sendtype) { // called on channel messages
 	counter++;
 	CHANNEL_MESSAGE_COUNT(chptr)++;
 	return HOOK_CONTINUE;

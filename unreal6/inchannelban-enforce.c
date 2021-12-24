@@ -235,23 +235,17 @@ int ice_local_join(Client *client, Channel *joined_channel, MessageTag *mtags){
 				banned_channel++;
 		}
 		if(!BadPtr(banned_channel) && match_esc(banned_channel, joined_channel->name)){ /* is banned and the ban matches just joined channel */
+			name[0] = "ban";
+			value[0] = channel->name;
+			name[1] = "joined";
+			value[1] = joined_channel->name;
+			name[2] = NULL;
+			value[2] = NULL;
 			if(settings.notice_text){
-				name[0] = "ban";
-				value[0] = channel->name;
-				name[1] = "joined";
-				value[1] = joined_channel->name;
-				name[2] = NULL;
-				value[2] = NULL;
 				buildvarstring(settings.notice_text, buf, sizeof(buf), name, value);
 				sendnotice(client, "%s", buf);
 			}
 			if(settings.action == ACTION_KICK){
-				name[0] = "ban";
-				value[0] = channel->name;
-				name[1] = "joined";
-				value[1] = joined_channel->name;
-				name[2] = NULL;
-				value[2] = NULL;
 				buildvarstring(settings.kick_text, buf, sizeof(buf), name, value);
 				kick_user(NULL, channel, &me, client, buf);
 			} else {

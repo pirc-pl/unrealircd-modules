@@ -198,6 +198,22 @@ wwwstats {
 };
 ```
 
+### inchannelban-enforce
+This one adds additional functionality to `~c`/`~channel` bans. Normally, if channel #a has `~channel:#b` on its ban list, it prevents users being on #b joining #a. But if the user joins #a first, (s)he can stay here reading all conversations, and the ban only forbids talking. This module prevents that, removing the user from #a immediately when #b is joined.
+
+The module looks for a config block:
+```C
+// if the config block is missing, the following settings are assumed
+inchannelban-enforce {
+	action kick; // must be "kick" or "part"
+	notice-text "*** Restrictions set on $ban prevent you from being on $joined at the same time. Leaving $ban"; // If missing, no notice will be sent.
+	kick-text "Enforcing channel ban for $joined"; // Required for "kick" action.
+};
+```
+In `notice-text` and `kick-text` you can use variables `$joined` (the channel that is banned and the user just joined, #b from the example above) and `$ban` (the channel that has `$joined` on its banlist, #a from the example).
+
+If `part` action is chosen, no PART reason will be displayed to other channel members. (The user is already banned, so can't use a PART reason anyway.)
+
 ## List of modules for UnrealIRCd 5 that I am not updating for UnrealIRCd 6
 
 1. `geoip-base`, `geoip-connect-notice`, `geoip-transfer`, `geoip-whois`, `geoip-chanban`: equivalent capabilities are now included inside Unreal 6. Please refer to the IRCd documentation on how to enable them.

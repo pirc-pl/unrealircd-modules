@@ -5,6 +5,19 @@ There are also older modules, known to work on the unrealircd-4.2.0 version, in 
 
 ## Unreal 6.x.x modules
 
+### Module index
+
+| Name | Description |
+|------|-------------|
+| [metadata](#metadata) | Adds user and channel metadata (avatars etc) |
+| [metadata-db](#metadata-db) | Stores user metadata (based on account) and channel metadata (+P only) |
+| [unauthban](#unauthban) | Allows adding bans that match only users not logged in |
+| [showwebirc](#showwebirc) | Displays in WHOIS whether an user uses WEBIRC or websocket |
+| [findchmodes](#findchmodes) | Allow ircops search for channels with certain mode set |
+| [wwwstats](#wwwstats) | Exposes some network stats via unix socket (for web statistics/live info) |
+| [wwwstats-mysql](#wwwstats-mysql) | Exposes some network stats via unix socket and periodically logs them to a MySQL/MariaDB database |
+| [inchannelban-enforce](#inchannelban-enforce) | Kicks out users that are on banned channels enforcing ~channel bans |
+
 ### metadata
 NOTE: [unreal 5 version is documented here](#metadata-u5)
 

@@ -58,6 +58,12 @@ module
 #define TOPICLEN MAXTOPICLEN
 #endif
 
+#if (UNREAL_VERSION_GENERATION == 5 && UNREAL_VERSION_MAJOR == 0 && UNREAL_VERSION_MINOR < 5)
+#define MESSAGE_SENDTYPE int
+#else
+#define MESSAGE_SENDTYPE SendType
+#endif
+
 #define CHANNEL_MESSAGE_COUNT(channel) moddata_channel(channel, message_count_md).i
 
 int counter;
@@ -70,7 +76,11 @@ ModDataInfo *message_count_md;
 MYSQL *stats_db;
 #endif
 
-int wwwstats_msg(Client *sptr, Channel *chptr, MessageTag *mtags, const char *msg, SendType sendtype);
+#if UNREAL_VERSION_TIME<202340
+int wwwstats_msg(Client *sptr, Channel *chptr, MessageTag *mtags, const char *msg, MESSAGE_SENDTYPE sendtype);
+#else
+int wwwstats_msg(Client *sptr, Channel *chptr, MessageTag **mtags, const char *msg, MESSAGE_SENDTYPE sendtype);
+#endif
 EVENT(wwwstats_socket_evt);
 char *tmp_escape(char *d, const char *a);
 
@@ -426,7 +436,12 @@ void md_free(ModData *md){
 	md->i = 0;
 }
 
-int wwwstats_msg(Client *sptr, Channel *chptr, MessageTag *mtags, const char *msg, SendType sendtype) { // called on channel messages
+#if UNREAL_VERSION_TIME<202340
+int wwwstats_msg(Client *sptr, Channel *chptr, MessageTag *mtags, const char *msg, MESSAGE_SENDTYPE sendtype)
+#else
+int wwwstats_msg(Client *sptr, Channel *chptr, MessageTag **mtags, const char *msg, MESSAGE_SENDTYPE sendtype)
+#endif
+{ // called on channel messages
 	counter++;
 	CHANNEL_MESSAGE_COUNT(chptr)++;
 	return HOOK_CONTINUE;

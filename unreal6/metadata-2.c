@@ -997,8 +997,10 @@ int metadata_subscribe(const char *key, Client *client, int remove, MessageTag *
 		trylater = 0;
 		list_for_each_entry(acptr, &client_list, client_node)
 		{
+			if (!IsUser(acptr))
+				continue;
 			value = NULL;
-			if (IsUser(client) && IsUser(acptr) && (has_common_channels(acptr, client) || metadata_is_monitoring(client, acptr)))
+			if (has_common_channels(acptr, client) || metadata_is_monitoring(client, acptr))
 				value = metadata_get_user_key_value(acptr, key);
 			if (value)
 				trylater |= metadata_notify_or_queue(client, mtags, acptr, NULL, key, value, NULL);
@@ -1618,6 +1620,9 @@ EVENT(metadata_queue_evt)
 
 void metadata_notify_monitored(Client *client, Client *monitored, Client *changer, const char *key, const char *value)
 {
+
+	if (!HasCapabilityFast(client, CAP_METADATA_NOTIFY))
+		return;
 	if (has_common_channels(client, monitored))
 		return; /* already notified */
 	if (!key)
@@ -1732,8 +1737,6 @@ int metadata_monitor_notification(Client *client, Watch *watch, Link *lp, int ev
 {
 	struct metadata_monitor_s *mond = data;
 	if (!(lp->flags & WATCH_FLAG_TYPE_MONITOR))
-		return 0;
-	if (!HasCapabilityFast(lp->value.client, CAP_METADATA_NOTIFY))
 		return 0;
 
 	if (event == WATCH_EVENT_METADATA) /* for now we don't have any other event anyway */

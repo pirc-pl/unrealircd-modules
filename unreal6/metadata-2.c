@@ -187,7 +187,7 @@ void metadata_sync_channel(Client *client, Channel *channel);
 int metadata_key_valid(const char *key);
 int metadata_check_perms(Client *user, Channel *channel, Client *client, const char *key, int mode);
 void metadata_send_change(Client *client, MessageTag *mtags, const char *who, const char *key, const char *value, Client *changer);
-int metadata_notify_or_queue(Client *client, MessageTag *mtags, const char *who, const char *key, const char *value, Client *changer);
+int metadata_notify_or_queue(Client *client, MessageTag *mtags, Client *who, Channel *chan, const char *key, const char *value, Client *changer);
 void metadata_notify_monitored(Client *client, Client *monitored, Client *changer, const char *key, const char *value);
 int metadata_is_monitoring(Client *watcher, Client *watched);
 
@@ -556,12 +556,12 @@ const char *metadata_get_channel_key_value(Channel *channel, const char *key)
 }
 
 /* returns 1 if something remains to sync */
-int metadata_notify_or_queue(Client *client, MessageTag *mtags, const char *who, const char *key, const char *value, Client *changer)
+int metadata_notify_or_queue(Client *client, MessageTag *mtags, Client *who, Channel *chan, const char *key, const char *value, Client *changer)
 {
 	int trylater = 0;
-	if (!who)
+	if (!who && !chan)
 	{
-		unreal_log(ULOG_DEBUG, "metadata", "METADATA_DEBUG", changer, "metadata_notify_or_queue called with null who!");
+		unreal_log(ULOG_DEBUG, "metadata", "METADATA_DEBUG", changer, "metadata_notify_or_queue called with null who and channel!");
 		return 0;
 	}
 	if (!key)
@@ -582,21 +582,19 @@ int metadata_notify_or_queue(Client *client, MessageTag *mtags, const char *who,
 
 	if (IsSendable(client))
 	{
-		metadata_send_change(client, mtags, who, key, value, changer);
+		const char *nick_or_channel;
+		if (chan)
+			nick_or_channel = chan->name;
+		else
+			nick_or_channel = who->name;
+		metadata_send_change(client, mtags, nick_or_channel, key, value, changer);
 	} else
 	{ /* store for the SYNC */
-		Client *who_client;
 		const char *uid_or_channel;
-		if (*who == '#') {
-			uid_or_channel = who;
-		} else {
-			who_client = find_client(who, NULL); /* FIXME the caller should already have this figured out */
-			if (!who_client) {
-				unreal_log(ULOG_DEBUG, "metadata", "METADATA_DEBUG", changer, "metadata_notify_or_queue called with nonexistent client!");
-				return 0; /* shouldn't happen */
-			}
-			uid_or_channel = who_client->id;
-		}
+		if (chan)
+			uid_or_channel = chan->name;
+		else
+			uid_or_channel = who->id;
 			
 		trylater = 1;
 		while (*us)
@@ -659,7 +657,7 @@ void user_metadata_changed(Client *user, const char *key, const char *value, Cli
 	list_for_each_entry(acptr, &lclient_list, lclient_node)
 	{ /* notifications for local subscribers */
 		if(IsUser(acptr) && IsUser(user) && metadata_is_subscribed(acptr, key) && has_common_channels(user, acptr))
-			metadata_notify_or_queue(acptr, NULL, user->name, key, value, changer);
+			metadata_notify_or_queue(acptr, NULL, user, NULL, key, value, changer);
 	}
 
 	list_for_each_entry(acptr, &server_list, special_node)
@@ -1003,7 +1001,7 @@ int metadata_subscribe(const char *key, Client *client, int remove, MessageTag *
 			if (IsUser(client) && IsUser(acptr) && (has_common_channels(acptr, client) || metadata_is_monitoring(client, acptr)))
 				value = metadata_get_user_key_value(acptr, key);
 			if (value)
-				trylater |= metadata_notify_or_queue(client, mtags, acptr->name, key, value, NULL);
+				trylater |= metadata_notify_or_queue(client, mtags, acptr, NULL, key, value, NULL);
 		}
 		for (hashnum = 0; hashnum < CHAN_HASH_TABLE_SIZE; hashnum++)
 		{
@@ -1013,7 +1011,7 @@ int metadata_subscribe(const char *key, Client *client, int remove, MessageTag *
 				{
 					value = metadata_get_channel_key_value(channel, key);
 					if (value)
-						trylater |= metadata_notify_or_queue(client, mtags, channel->name, key, value, NULL);
+						trylater |= metadata_notify_or_queue(client, mtags, NULL, channel, key, value, NULL);
 				}
 			}
 		}
@@ -1448,7 +1446,7 @@ int metadata_join(Client *client, Channel *channel, MessageTag *join_mtags)
 		list_for_each_entry(acptr, &lclient_list, lclient_node)
 		{
 			if(IsMember(acptr, channel) && metadata_is_subscribed(acptr, metadata->name))
-				metadata_notify_or_queue(acptr, NULL, client->name, metadata->name, metadata->value, NULL);
+				metadata_notify_or_queue(acptr, NULL, client, NULL, metadata->name, metadata->value, NULL);
 		}
 	}
 	MAKE_BATCH(client, batch, batch_mtags);
@@ -1456,7 +1454,7 @@ int metadata_join(Client *client, Channel *channel, MessageTag *join_mtags)
 	{
 		value = metadata_get_channel_key_value(channel, subs->name); /* notify joining user about channel metadata */
 		if(value)
-			metadata_notify_or_queue(client, batch_mtags, channel->name, subs->name, value, NULL);
+			metadata_notify_or_queue(client, batch_mtags, NULL, channel, subs->name, value, NULL);
 		for (cm = channel->members; cm; cm = cm->next)
 		{ /* notify joining user about other channel members' metadata */
 			acptr = cm->client;
@@ -1466,7 +1464,7 @@ int metadata_join(Client *client, Channel *channel, MessageTag *join_mtags)
 				continue; /* already seen elsewhere */
 			value = metadata_get_user_key_value(acptr, subs->name);
 			if (value)
-				metadata_notify_or_queue(client, batch_mtags, acptr->name, subs->name, value, NULL);
+				metadata_notify_or_queue(client, batch_mtags, acptr, NULL, subs->name, value, NULL);
 		}
 	}
 	FINISH_BATCH(client, batch, batch_mtags);
@@ -1574,7 +1572,7 @@ void metadata_sync_user(Client *client, Client *target, MessageTag *mtags, int c
 		for (metadata = moddata->metadata; metadata; metadata = metadata->next)
 		{		
 			if(metadata_is_subscribed(client, metadata->name))
-				metadata_notify_or_queue(client, mtags, target->name, metadata->name, metadata->value, NULL);
+				metadata_notify_or_queue(client, mtags, target, NULL, metadata->name, metadata->value, NULL);
 		}
 	}
 
@@ -1598,7 +1596,7 @@ void metadata_sync_channel(Client *client, Channel *channel) {
 		{
 			value = metadata_get_channel_key_value(channel, subs->name); /* channel metadata notification */
 			if(value)
-				metadata_notify_or_queue(client, mtags, channel->name, subs->name, value, NULL);
+				metadata_notify_or_queue(client, mtags, NULL, channel, subs->name, value, NULL);
 		}
 		for (cm = channel->members; cm; cm = cm->next) /* notify about all channel members' metadata (including the query source) */
 			metadata_sync_user(client, cm->client, mtags, 0);
@@ -1627,7 +1625,7 @@ void metadata_notify_monitored(Client *client, Client *monitored, Client *change
 	else
 	{
 		if (metadata_is_subscribed(client, key))
-			metadata_notify_or_queue(client, NULL, monitored->name, key, value, changer);
+			metadata_notify_or_queue(client, NULL, monitored, NULL, key, value, changer);
 	}
 }
 

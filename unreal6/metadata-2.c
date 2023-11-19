@@ -13,7 +13,7 @@
 
 #define STR_RPL_WHOISKEYVALUE		/* 760 */	"%s %s %s :%s"
 #define STR_RPL_KEYVALUE			/* 761 */	"%s %s %s :%s"
-#define STR_RPL_KEYNOTSET			/* 766 */	"%s %s :key not set" /* FIXME sending FAIL instead */
+#define STR_RPL_KEYNOTSET			/* 766 */	"%s %s :key not set"
 #define STR_RPL_METADATASUBOK		/* 770 */	":%s"
 #define STR_RPL_METADATAUNSUBOK		/* 771 */	":%s"
 #define STR_RPL_METADATASUBS		/* 772 */	":%s"

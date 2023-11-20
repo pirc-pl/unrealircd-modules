@@ -1,4 +1,3 @@
-
 #include "unrealircd.h"
 
 /* this should go into include/numeric.h (was there at one point of time) */
@@ -37,9 +36,6 @@ void sendnumericfmt_tags (Client *to, MessageTag *mtags, int numeric, FORMAT_STR
 }
 
 /* actual METADATA code */
-
-#define STR_HELPER(x) #x
-#define STR(x) STR_HELPER(x)
 
 /* get or set for perms */
 #define MODE_SET 0
@@ -153,7 +149,6 @@ CMD_FUNC(cmd_metadata_remote);
 CMD_FUNC(cmd_metadata_local);
 EVENT(metadata_queue_evt);
 const char *metadata_cap_param(Client *client);
-char *metadata_isupport_param(void);
 int metadata_configtest(ConfigFile *cf, ConfigEntry *ce, int type, int *errs);
 int metadata_configposttest(int *errs);
 int metadata_configrun(ConfigFile *cf, ConfigEntry *ce, int type);
@@ -480,7 +475,6 @@ MOD_LOAD() {
 		metadata_settings.max_value_bytes = 300;
 
 	EventAdd(modinfo->handle, "metadata_queue", metadata_queue_evt, NULL, 1500, 0);
-	ISupportAdd(modinfo->handle, "METADATA", metadata_isupport_param());
 	return MOD_SUCCESS;
 }
 
@@ -493,13 +487,6 @@ const char *metadata_cap_param(Client *client)
 	static char buf[80];
 	ircsnprintf(buf, sizeof(buf), "before-connect,max-subs=%d,max-keys=%d,max-value-bytes=%d",
 		metadata_settings.max_subscriptions, metadata_settings.max_user_metadata, metadata_settings.max_value_bytes);
-	return buf;
-}
-
-char *metadata_isupport_param(void)
-{
-	static char buf[20];
-	ircsnprintf(buf, sizeof(buf), "%d", metadata_settings.max_user_metadata);
 	return buf;
 }
 

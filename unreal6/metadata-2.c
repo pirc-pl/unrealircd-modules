@@ -65,7 +65,7 @@ void sendnumericfmt_tags (Client *to, MessageTag *mtags, int numeric, FORMAT_STR
 		channel = find_channel(channame); \
 		if (!channel) \
 		{ \
-			sendnumeric(client, ERR_NOSUCHNICK, channame); \
+			sendto_one(client, NULL, ":%s FAIL METADATA INVALID_TARGET %s :invalid metadata target", me.name, channame); \
 			return; \
 		} \
 	} else \
@@ -75,7 +75,7 @@ void sendnumericfmt_tags (Client *to, MessageTag *mtags, int numeric, FORMAT_STR
 			user = hash_find_nickatserver(target, NULL); \
 			if (!user) \
 			{ \
-				sendnumeric(client, ERR_NOSUCHNICK, target); \
+				sendto_one(client, NULL, ":%s FAIL METADATA INVALID_TARGET %s :invalid metadata target", me.name, target); \
 				return; \
 			} \
 		} else \
@@ -98,10 +98,10 @@ void sendnumericfmt_tags (Client *to, MessageTag *mtags, int numeric, FORMAT_STR
 #define USER_METADATA(client) moddata_client(client, metadataUser).ptr
 #define CHANNEL_METADATA(channel) moddata_channel(channel, metadataChannel).ptr
 
-#define MAKE_BATCH(client, batch, mtags) do { \
+#define MAKE_BATCH(client, batch, mtags, target) do { \
 	if (HasCapability(client, "batch")) { \
 		generate_batch_id(batch); \
-		sendto_one(client, NULL, ":%s BATCH +%s metadata", me.name, batch); \
+		sendto_one(client, NULL, ":%s BATCH +%s metadata %s", me.name, batch, target); \
 		mtags = safe_alloc(sizeof(MessageTag)); \
 		mtags->name = strdup("batch"); \
 		mtags->value = strdup(batch); \
@@ -164,15 +164,15 @@ const char *metadata_get_user_key_value(Client *user, const char *key);
 const char *metadata_get_channel_key_value(Channel *channel, const char *key);
 void user_metadata_changed(Client *user, const char *key, const char *value, Client *changer);
 void channel_metadata_changed(Channel *channel, const char *key, const char *value, Client *changer);
-void metadata_free_list(struct metadata *metadata, const char *whose, Client *client);
+void metadata_free_list(struct metadata *metadata, const char *whose, Client *client, MessageTag *mtags);
 struct metadata_moddata_user *metadata_prepare_user_moddata(Client *user);
 void metadata_set_channel(Channel *channel, const char *key, const char *value, Client *client);
 void metadata_set_user(Client *user, const char *key, const char *value, Client *client);
 void metadata_send_channel(Channel *channel, const char *key, Client *client, MessageTag *mtags);
 void metadata_send_user(Client *user, const char *key, Client *client, MessageTag *mtags);
 int metadata_subscribe(const char *key, Client *client, int remove, MessageTag *mtags);
-void metadata_clear_channel(Channel *channel, Client *client);
-void metadata_clear_user(Client *user, Client *client);
+void metadata_clear_channel(Channel *channel, Client *client, MessageTag *mtags);
+void metadata_clear_user(Client *user, Client *client, MessageTag *mtags);
 void metadata_send_subscribtions(Client *client);
 void metadata_send_all_for_channel(Channel *channel, Client *client);
 void metadata_send_all_for_user(Client *user, Client *client);
@@ -623,16 +623,12 @@ void metadata_send_change(Client *client, MessageTag *mtags, const char *who, co
 		sender = me.name;
 	if (changer && IsUser(changer) && MyUser(client))
 	{
-		if (!value)
-			sendto_one(client, mtags, ":%s!%s@%s METADATA %s %s %s", sender, changer->user->username, GetHost(changer), who, key, "*");
-		else
-			sendto_one(client, mtags, ":%s!%s@%s METADATA %s %s %s :%s", sender, changer->user->username, GetHost(changer), who, key, "*", value);
+		/* Always send value parameter (empty if NULL) */
+		sendto_one(client, mtags, ":%s!%s@%s METADATA %s %s %s :%s", sender, changer->user->username, GetHost(changer), who, key, "*", value ? value : "");
 	} else
 	{ /* sending S2S (sender is id) or receiving S2S (sender is servername) */
-		if (!value)
-			sendto_one(client, mtags, ":%s METADATA %s %s %s", sender, who, key, "*");
-		else
-			sendto_one(client, mtags, ":%s METADATA %s %s %s :%s", sender, who, key, "*", value);
+		/* Always send value parameter (empty if NULL) */
+		sendto_one(client, mtags, ":%s METADATA %s %s %s :%s", sender, who, key, "*", value ? value : "");
 	}
 }
 
@@ -685,7 +681,7 @@ void channel_metadata_changed(Channel *channel, const char *key, const char *val
 	}
 }
 
-void metadata_free_list(struct metadata *metadata, const char *whose, Client *client)
+void metadata_free_list(struct metadata *metadata, const char *whose, Client *client, MessageTag *mtags)
 {
 	struct metadata *prev_metadata = metadata;
 	char *name;
@@ -698,7 +694,7 @@ void metadata_free_list(struct metadata *metadata, const char *whose, Client *cl
 		prev_metadata = metadata;
 		if(client && whose && *whose)
 		{ /* send out the data being removed, unless we're unloading the module */
-			sendnumeric(client, RPL_KEYVALUE, whose, name, "*", "");
+			sendnumeric_mtags(client, mtags, RPL_KEYVALUE, whose, name, "*", "");
 			if(*whose == '#')
 				channel_metadata_changed(find_channel(whose), name, NULL, client);
 			else
@@ -713,7 +709,7 @@ void metadata_channel_free(ModData *md)
 	if (!md->ptr)
 		return; /* was not set */
 	struct metadata *metadata = md->ptr;
-	metadata_free_list(metadata, NULL, NULL);
+	metadata_free_list(metadata, NULL, NULL, NULL);
 }
 
 void metadata_user_free(ModData *md)
@@ -733,7 +729,7 @@ void metadata_user_free(ModData *md)
 		prev_sub = sub;
 	}
 	struct metadata *metadata = moddata->metadata;
-	metadata_free_list(metadata, NULL, NULL);
+	metadata_free_list(metadata, NULL, NULL, NULL);
 	while (us)
 	{
 		safe_free(us->id);
@@ -1020,7 +1016,7 @@ void metadata_send_channel(Channel *channel, const char *key, Client *client, Me
 	char batch[BATCHLEN+1] = "";
 	int parent_mtags = !!mtags;
 	if (!parent_mtags)
-		MAKE_BATCH(client, batch, mtags);
+		MAKE_BATCH(client, batch, mtags, channel->name);
 	for (metadata = CHANNEL_METADATA(channel); metadata; metadata = metadata->next)
 	{
 		if (!strcasecmp(key, metadata->name))
@@ -1045,7 +1041,7 @@ void metadata_send_user(Client *user, const char *key, Client *client, MessageTa
 	char batch[BATCHLEN+1] = "";
 	int parent_mtags = !!mtags;
 	if (!parent_mtags)
-		MAKE_BATCH(client, batch, mtags);
+		MAKE_BATCH(client, batch, mtags, user->name);
 	if (moddata)
 		metadata = moddata->metadata;
 	int found = 0;
@@ -1064,14 +1060,14 @@ void metadata_send_user(Client *user, const char *key, Client *client, MessageTa
 		FINISH_BATCH(client, batch, mtags);
 }
 
-void metadata_clear_channel(Channel *channel, Client *client)
+void metadata_clear_channel(Channel *channel, Client *client, MessageTag *mtags)
 {
 	struct metadata *metadata = CHANNEL_METADATA(channel);
-	metadata_free_list(metadata, channel->name, client);
+	metadata_free_list(metadata, channel->name, client, mtags);
 	CHANNEL_METADATA(channel) = NULL;
 }
 
-void metadata_clear_user(Client *user, Client *client)
+void metadata_clear_user(Client *user, Client *client, MessageTag *mtags)
 {
 	if (!user)
 		user = client;
@@ -1080,7 +1076,7 @@ void metadata_clear_user(Client *user, Client *client)
 	if (!moddata)
 		return; /* nothing to delete */
 	metadata = moddata->metadata;
-	metadata_free_list(metadata, user->name, client);
+	metadata_free_list(metadata, user->name, client, mtags);
 	moddata->metadata = NULL;
 }
 
@@ -1090,14 +1086,21 @@ void metadata_send_subscribtions(Client *client)
 	struct metadata_moddata_user *moddata = USER_METADATA(client);
 	char batch[BATCHLEN+1] = "";
 	MessageTag *mtags = NULL;
-	
-	MAKE_BATCH(client, batch, mtags);
+
+	/* Create metadata-subs batch (not metadata batch) */
+	if (HasCapability(client, "batch")) {
+		generate_batch_id(batch);
+		sendto_one(client, NULL, ":%s BATCH +%s metadata-subs", me.name, batch);
+		mtags = safe_alloc(sizeof(MessageTag));
+		mtags->name = strdup("batch");
+		mtags->value = strdup(batch);
+	}
 
 	if (moddata) {
 		for (subs = moddata->subs; subs; subs = subs->next)
 			sendnumeric_mtags(client, mtags, RPL_METADATASUBS, subs->name);
 	}
-	
+
 	FINISH_BATCH(client, batch, mtags);
 }
 
@@ -1106,7 +1109,7 @@ void metadata_send_all_for_channel(Channel *channel, Client *client)
 	struct metadata *metadata;
 	char batch[BATCHLEN+1] = "";
 	MessageTag *mtags = NULL;
-	MAKE_BATCH(client, batch, mtags);
+	MAKE_BATCH(client, batch, mtags, channel->name);
 	for (metadata = CHANNEL_METADATA(channel); metadata; metadata = metadata->next)
 		sendnumeric_mtags(client, mtags, RPL_KEYVALUE, channel->name, metadata->name, "*", metadata->value);
 	FINISH_BATCH(client, batch, mtags);
@@ -1120,7 +1123,7 @@ void metadata_send_all_for_user(Client *user, Client *client)
 	if (!user)
 		user = client;
 	struct metadata_moddata_user *moddata = USER_METADATA(user);
-	MAKE_BATCH(client, batch, mtags);
+	MAKE_BATCH(client, batch, mtags, user->name);
 	if (moddata) {
 		for (metadata = moddata->metadata; metadata; metadata = metadata->next)
 			sendnumeric_mtags(client, mtags, RPL_KEYVALUE, user->name, metadata->name, "*", metadata->value);
@@ -1130,15 +1133,17 @@ void metadata_send_all_for_user(Client *user, Client *client)
 
 int metadata_key_valid(const char *key)
 {
+	/* Empty string is invalid */
+	if (!key || !*key)
+		return 0;
+
 	for( ; *key; key++)
 	{
 		if(*key >= 'a' && *key <= 'z')
 			continue;
-		if(*key >= 'A' && *key <= 'Z')
-			continue;
 		if(*key >= '0' && *key <= '9')
 			continue;
-		if(*key == '_' || *key == '.' || *key == ':' || *key == '-')
+		if(*key == '_' || *key == '.' || *key == '/' || *key == '-')
 			continue;
 		return 0;
 	}
@@ -1203,7 +1208,7 @@ CMD_FUNC(cmd_metadata_local)
 		CHECKREGISTERED_OR_DIE(client, return);
 		CHECKPARAMSCNT_OR_DIE(3, return);
 		PROCESS_TARGET_OR_DIE(target, user, channel, return);
-		MAKE_BATCH(client, batch, batch_mtags);
+		MAKE_BATCH(client, batch, batch_mtags, channel ? channel->name : user->name);
 		FOR_EACH_KEY(keyindex, parc, parv)
 		{
 			if (metadata_check_perms(user, channel, client, key, MODE_GET))
@@ -1271,21 +1276,27 @@ CMD_FUNC(cmd_metadata_local)
 		PROCESS_TARGET_OR_DIE(target, user, channel, return);
 		if (metadata_check_perms(user, channel, client, "*", MODE_SET))
 		{
+			char clear_batch[BATCHLEN+1] = "";
+			MessageTag *clear_mtags = NULL;
+			MAKE_BATCH(client, clear_batch, clear_mtags, channel ? channel->name : user->name);
 			if (channel)
-				metadata_clear_channel(channel, client);
+				metadata_clear_channel(channel, client, clear_mtags);
 			else
-				metadata_clear_user(user, client);
+				metadata_clear_user(user, client, clear_mtags);
+			FINISH_BATCH(client, clear_batch, clear_mtags);
 		}
 	} else if (!strcasecmp(cmd, "SUB"))
 	{
 		PROCESS_TARGET_OR_DIE(target, user, channel, return);
 		CHECKPARAMSCNT_OR_DIE(3, return);
-		MAKE_BATCH(client, batch, batch_mtags);
+		MAKE_BATCH(client, batch, batch_mtags, "*");
 		FOR_EACH_KEY(keyindex, parc, parv)
 		{
 			if(metadata_key_valid(key))
 			{
-				metadata_subscribe(key, client, 0, batch_mtags);
+				/* Stop processing if subscription limit is reached */
+				if (!metadata_subscribe(key, client, 0, batch_mtags))
+					break;
 			} else
 			{
 				sendto_one(client, batch_mtags, ":%s FAIL METADATA KEY_INVALID %s :invalid key", me.name,  key);
@@ -1297,7 +1308,7 @@ CMD_FUNC(cmd_metadata_local)
 	{
 		CHECKREGISTERED_OR_DIE(client, return);
 		CHECKPARAMSCNT_OR_DIE(3, return);
-		MAKE_BATCH(client, batch, batch_mtags);
+		MAKE_BATCH(client, batch, batch_mtags, "*");
 		int subok = 0;
 		FOR_EACH_KEY(keyindex, parc, parv)
 		{
@@ -1448,7 +1459,7 @@ int metadata_join(Client *client, Channel *channel, MessageTag *join_mtags)
 				metadata_notify_or_queue(acptr, NULL, client, NULL, metadata->name, metadata->value, NULL);
 		}
 	}
-	MAKE_BATCH(client, batch, batch_mtags);
+	MAKE_BATCH(client, batch, batch_mtags, channel->name);
 	for (subs = moddata->subs; subs; subs = subs->next)
 	{
 		value = metadata_get_channel_key_value(channel, subs->name); /* notify joining user about channel metadata */
@@ -1486,7 +1497,7 @@ void metadata_send_pending(Client *client)
 	struct metadata_unsynced *prev_us;
 
 	if (us)
-		MAKE_BATCH(client, batch, mtags);
+		MAKE_BATCH(client, batch, mtags, "*");
 
 	while (us)
 	{
@@ -1565,11 +1576,11 @@ void metadata_sync_user(Client *client, Client *target, MessageTag *mtags, int c
 	struct metadata_moddata_user *moddata = USER_METADATA(target);
 
 	if (!parent_mtags && create_batch)
-		MAKE_BATCH(client, batch, mtags);
+		MAKE_BATCH(client, batch, mtags, target->name);
 
 	if (moddata) { /* the user is either subscribed to something (this is not interesting to us) or has some own data */
 		for (metadata = moddata->metadata; metadata; metadata = metadata->next)
-		{		
+		{
 			if(metadata_is_subscribed(client, metadata->name))
 				metadata_notify_or_queue(client, mtags, target, NULL, metadata->name, metadata->value, NULL);
 		}
@@ -1587,7 +1598,7 @@ void metadata_sync_channel(Client *client, Channel *channel) {
 	const char *value;
 	struct metadata_moddata_user *moddata = USER_METADATA(client);
 
-	MAKE_BATCH(client, batch, mtags);
+	MAKE_BATCH(client, batch, mtags, channel->name);
 
 	if (moddata)
 	{

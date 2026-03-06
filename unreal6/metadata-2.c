@@ -85,7 +85,7 @@ void sendnumericfmt_tags (Client *to, MessageTag *mtags, int numeric, FORMAT_STR
 	} \
 }
 
-#define FOR_EACH_KEY(keyindex, parc, parv) while(keyindex++, key = parv[keyindex], (!BadPtr(key) && keyindex < parc))
+#define FOR_EACH_KEY(keyindex, parc, parv) while(keyindex++, keyindex < parc && !BadPtr(key = parv[keyindex]))
 #define IsSendable(x)		(DBufLength(&x->local->sendQ) < 2048)
 #define CHECKREGISTERED_OR_DIE(client, return) \
 { \
@@ -308,7 +308,7 @@ int metadata_configtest(ConfigFile *cf, ConfigEntry *ce, int type, int *errs) {
 					break;
 				}
 			}
-			if (!errors && (atoi(cep->value) < 0 || atoi(cep->value) > 100))
+			if (!errors && (atoi(cep->value) < 1 || atoi(cep->value) > 100))
 			{
 				config_error("%s:%i: %s::%s must be an integer between 1 and 100", cep->file->filename, cep->line_number, MYCONF, cep->name);
 				errors++;
@@ -328,7 +328,7 @@ int metadata_configtest(ConfigFile *cf, ConfigEntry *ce, int type, int *errs) {
 					break;
 				}
 			}
-			if (!errors && (atoi(cep->value) < 0 || atoi(cep->value) > 400))
+			if (!errors && (atoi(cep->value) < 1 || atoi(cep->value) > 400))
 			{
 				config_error("%s:%i: %s::%s must be an integer between 1 and 400", cep->file->filename, cep->line_number, MYCONF, cep->name);
 				errors++;
@@ -751,6 +751,7 @@ struct metadata_moddata_user *metadata_prepare_user_moddata(Client *user)
 	struct metadata_moddata_user *ptr = USER_METADATA(user);
 	ptr->metadata = NULL;
 	ptr->subs = NULL;
+	ptr->us = NULL;
 	return ptr;
 }
 
@@ -1506,11 +1507,6 @@ int metadata_join(Client *client, Channel *channel, MessageTag *join_mtags)
 
 void metadata_send_pending(Client *client)
 {
-	Client *acptr = NULL;
-	Channel *channel = NULL;
-	int do_send = 0;
-	char *who;
-
 	struct metadata_moddata_user *my_moddata = USER_METADATA(client);
 	if (!my_moddata)
 		return; /* nothing queued */
@@ -1519,6 +1515,11 @@ void metadata_send_pending(Client *client)
 
 	while (us)
 	{
+		Client *acptr = NULL;
+		Channel *channel = NULL;
+		int do_send = 0;
+		char *who = NULL;
+
 		if (!IsSendable(client))
 			break;
 		if (*us->id == '#')
@@ -1604,10 +1605,8 @@ int metadata_user_registered(Client *client)
 
 void metadata_sync_user(Client *client, Client *target, MessageTag *mtags, int create_batch) {
 	char batch[BATCHLEN+1] = "";
-	struct metadata_subscriptions *subs;
 	struct metadata *metadata;
 	int parent_mtags = 0;
-	Client *acptr;
 	
 	if (mtags)
 		parent_mtags = 1;
